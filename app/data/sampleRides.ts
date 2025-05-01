@@ -1,0 +1,88 @@
+import { Ride } from '../../types/ride';
+
+export const sampleRides: Ride[] = [
+  {
+    id: '1',
+    title: 'Morning Field of the Dreams loop',
+    description: 'Chill pace morning spin',
+    startTime: new Date('2025-06-10T08:00:00'),
+    route: {
+      distance: 45,
+      elevationGain: 250,
+      gpxFile: null,
+    },
+    meetingPoint: {
+      latitude: 37.7749,
+      longitude: -122.4194,
+      address: 'Front of Beeline cycles',
+    },
+    maxParticipants: 3,
+    currentParticipants: 1,
+    terrain: 'Road',
+    pace: '25',
+    difficulty: 'Intermediate',
+    genderPreference: 'All',
+    organizer: {
+      id: 'user1',
+      name: 'Sarah Wilson',
+      rating: 4.8,
+    },
+    participants: [],
+  },
+  {
+    id: '2',
+    title: 'Trail Adventure',
+    description: 'Exciting mountain bike trails with stunning views!',
+    startTime: new Date('2024-03-12T09:30:00'),
+    route: {
+      distance: 90,
+      elevationGain: 1500,
+      gpxFile: null,
+    },
+    meetingPoint: {
+      latitude: 37.7858,
+      longitude: -122.4008,
+      address: 'Westgate Shopping centre',
+    },
+    maxParticipants: 8,
+    currentParticipants: 5,
+    terrain: 'Gravel',
+    pace: '23kph',
+    difficulty: 'Advanced',
+    genderPreference: 'All',
+    organizer: {
+      id: 'user2',
+      name: 'Mike Johnson',
+      rating: 4.9,
+    },
+    participants: [],
+  },
+  {
+    id: '3',
+    title: 'Casual Coffee Ride',
+    description: 'Easy-paced ride with a coffee stop midway.',
+    startTime: new Date('2024-03-15T10:00:00'),
+    route: {
+      distance: 60,
+      elevationGain: 480,
+      gpxFile: null,
+    },
+    meetingPoint: {
+      latitude: 37.7694,
+      longitude: -122.4862,
+      address: 'Golden Gate Park',
+    },
+    maxParticipants: 8,
+    currentParticipants: 7,
+    terrain: 'Road',
+    pace: '23-26kph',
+    difficulty: 'Beginner',
+    genderPreference: 'All',
+    organizer: {
+      id: 'user3',
+      name: 'Emily Chen',
+      rating: 4.7,
+    },
+    participants: [],
+  },
+]; 
