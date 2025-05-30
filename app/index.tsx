@@ -20,7 +20,7 @@ import {
 } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker } from '../components/MapView';
 import { Ride, TerrainType, PaceLevel, DifficultyLevel } from '../types/ride';
 import { FilterState, defaultFilterState } from '../app/types/filters';
 import { useRides } from './context/RideContext';

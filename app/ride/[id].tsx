@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, Dimensions } from 'react-native';
 import { Text, Appbar, Surface, Button, Avatar, Chip, IconButton, Portal, Modal, TextInput } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker } from '../../components/MapView';
 import { format } from 'date-fns';
 import { PaceLevelRanges, PaceLevel } from '../../types/ride';
 import { useMessages } from '../context/MessageContext';

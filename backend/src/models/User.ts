@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 // 导入统一的类型定义
-import { User, ClubReference, EmergencyContact } from '../../../shared/types/user-unified';
+import { User as UserType, ClubReference, EmergencyContact } from '../../../shared/types/user-unified';
 
 // 后端用户接口，继承统一定义并添加Document和方法
 export interface IUser extends Document {
@@ -25,7 +25,7 @@ export interface IUser extends Document {
   profilePicture?: string; // 兼容字段，实际使用avatar
   emergencyContact?: EmergencyContact;
   comparePassword(candidatePassword: string): Promise<boolean>;
-  toJSON(): User; // 转换为前端类型的方法
+  toJSON(): UserType; // 转换为前端类型的方法
 }
 
 const userSchema = new Schema<IUser>(
@@ -114,7 +114,7 @@ userSchema.methods.comparePassword = async function (candidatePassword: string):
 };
 
 // 转换为前端类型的方法
-userSchema.methods.toJSON = function (): User {
+userSchema.methods.toJSON = function (): UserType {
   const userObject = this.toObject();
   
   // 移除敏感信息
@@ -139,7 +139,7 @@ userSchema.methods.toJSON = function (): User {
     }));
   }
   
-  return userObject as User;
+  return userObject as UserType;
 };
 
 export const User = mongoose.model<IUser>('User', userSchema); 

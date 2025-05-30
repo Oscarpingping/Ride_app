@@ -156,7 +156,7 @@ export function toUserSummary(user: User | BaseUser): UserSummary {
 }
 
 export function toUserPublic(user: User): UserPublic {
-  const { email, password, emergencyContact, createdRides, joinedRides, clubs, ...publicUser } = user;
+  const { password, emergencyContact, createdRides, joinedRides, clubs, ...publicUser } = user;
   return publicUser;
 }
 
