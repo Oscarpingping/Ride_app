@@ -1,89 +1,154 @@
 import { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Button, TextInput, Text, Surface } from 'react-native-paper';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { Text, TextInput, Button, Surface } from 'react-native-paper';
 import { useRouter } from 'expo-router';
+import { useAuth } from './context/AuthContext';
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
   const router = useRouter();
+  const { login, register } = useAuth();
 
-  const handleAuth = () => {
-    // TODO: Implement authentication with Firebase
-    console.log('Auth attempt:', { email, password });
-    router.replace('/');
+  const handleSubmit = async () => {
+    try {
+      setError('');
+      if (isLogin) {
+        await login({ email, password });
+      } else {
+        await register({ email, password, name });
+      }
+      router.replace('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <Surface style={styles.surface}>
-        <Text variant="headlineMedium" style={styles.title}>
-          {isLogin ? 'Welcome Back' : 'Create Account'}
-        </Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Surface style={styles.surface}>
+          <Text variant="headlineMedium" style={styles.title}>
+            {isLogin ? 'Welcome Back' : 'Create Account'}
+          </Text>
+          
+          {!isLogin && (
+            <TextInput
+              label="Name"
+              value={name}
+              onChangeText={setName}
+              style={styles.input}
+              mode="outlined"
+            />
+          )}
+          
+          <TextInput
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+            mode="outlined"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          
+          <TextInput
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            style={styles.input}
+            mode="outlined"
+            secureTextEntry
+          />
+          
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          
+          <Button
+            mode="contained"
+            onPress={handleSubmit}
+            style={styles.button}
+          >
+            {isLogin ? 'Login' : 'Sign Up'}
+          </Button>
 
-        <TextInput
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          mode="outlined"
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+          {isLogin && (
+            <View style={styles.registerPrompt}>
+              <Text variant="bodyMedium" style={styles.registerText}>
+                New to WildPals?
+              </Text>
+              <Button
+                mode="text"
+                onPress={() => setIsLogin(false)}
+                style={styles.registerButton}
+              >
+                Create an account
+              </Button>
+            </View>
+          )}
 
-        <TextInput
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          mode="outlined"
-          style={styles.input}
-          secureTextEntry
-        />
-
-        <Button
-          mode="contained"
-          onPress={handleAuth}
-          style={styles.button}
-        >
-          {isLogin ? 'Login' : 'Sign Up'}
-        </Button>
-
-        <Button
-          mode="text"
-          onPress={() => setIsLogin(!isLogin)}
-          style={styles.switchButton}
-        >
-          {isLogin ? 'Need an account? Sign up' : 'Already have an account? Login'}
-        </Button>
-      </Surface>
-    </View>
+          {!isLogin && (
+            <Button
+              mode="text"
+              onPress={() => setIsLogin(true)}
+              style={styles.switchButton}
+            >
+              Already have an account? Login
+            </Button>
+          )}
+        </Surface>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 16,
     backgroundColor: '#f5f5f5',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
   },
   surface: {
     padding: 20,
-    borderRadius: 8,
+    borderRadius: 10,
     elevation: 4,
   },
   title: {
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   input: {
     marginBottom: 16,
   },
   button: {
-    marginTop: 16,
+    marginTop: 8,
+  },
+  error: {
+    color: 'red',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  registerPrompt: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  registerText: {
+    marginBottom: 8,
+    color: '#666',
+  },
+  registerButton: {
+    marginTop: 4,
   },
   switchButton: {
-    marginTop: 8,
+    marginTop: 16,
   },
 }); 

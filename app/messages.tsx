@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Text, Surface, TextInput, IconButton, Avatar } from 'react-native-paper';
-import { useMessages } from '../context/MessageContext';
-import type { ChatThread, Message } from '../context/MessageContext';
+import { useMessages } from './context/MessageContext';
+import type { ChatThread, Message } from './context/MessageContext';
 
 export default function MessagesScreen() {
   const { threads, messages, selectedThread, selectThread, sendMessage } = useMessages();

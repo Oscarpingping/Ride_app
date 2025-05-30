@@ -1,3 +1,5 @@
+import { ClubReference } from '../shared/types/user';
+
 export type TerrainType = 'Road' | 'Gravel' | 'MTB' | 'Urban' | 'Mixed';
 export type PaceLevel = 'Casual' | 'Moderate' | 'Fast';
 export type DifficultyLevel = 'Beginner' | 'Intermediate' | 'Advanced';
@@ -47,13 +49,11 @@ export const PaceLevelRanges: Record<PaceLevel, { minSpeed: number; maxSpeed: nu
 export interface User {
   id: string;
   name: string;
-  email?: string;
-  skillLevel?: string;
-  preferredRidingStyle?: string[];
-  bikeType?: string;
+  email: string;
   rating: number;
   ridesJoined?: number;
   ridesCreated?: number;
+  clubs?: ClubReference[];
   profilePicture?: string;
   emergencyContact?: {
     name: string;

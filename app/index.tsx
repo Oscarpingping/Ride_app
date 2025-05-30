@@ -23,7 +23,7 @@ import { useRouter } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import { Ride, TerrainType, PaceLevel, DifficultyLevel } from '../types/ride';
 import { FilterState, defaultFilterState } from '../app/types/filters';
-import { useRides } from '../context/RideContext';
+import { useRides } from './context/RideContext';
 import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import MessagesScreen from './messages';
 import { sampleRides } from './data/sampleRides';

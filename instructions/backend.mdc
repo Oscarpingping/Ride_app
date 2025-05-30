@@ -1,0 +1,9 @@
+---
+description: 
+globs: backend/**/*.ts,shared/**/*.ts
+alwaysApply: false
+---
+//描述：对后端设计请执行如下规则
+使用Express.js做路由(我的标配)
+遵循RESTful API规范(标准很重要)
+使用async/await(拒绝回调地狱)

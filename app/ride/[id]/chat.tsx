@@ -4,6 +4,7 @@ import { Text, Surface, TextInput, IconButton, Avatar, Divider } from 'react-nat
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import { ChatMessage, User } from '../../../types/ride';
+import { ClubReference } from '../../../shared/types/user';
 
 export default function RideChatScreen() {
   const { id } = useLocalSearchParams();
@@ -16,50 +17,44 @@ export default function RideChatScreen() {
     id: '2',
     name: 'Jane Smith',
     email: 'jane@example.com',
-    skillLevel: 'Intermediate',
-    preferredRidingStyle: ['Road'],
-    bikeType: 'Road Bike',
     rating: 4.9,
     ridesJoined: 8,
     ridesCreated: 2,
+    clubs: [{
+      club: '1',
+      joinedAt: new Date('2024-01-01')
+    }] as ClubReference[]
   };
 
   // Mock chat messages
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      sender: {
-        id: '1',
-        name: 'Sarah Johnson',
-        email: 'sarah@example.com',
-        skillLevel: 'Intermediate',
-        preferredRidingStyle: ['Road'],
-        bikeType: 'Road Bike',
-        rating: 4.8,
-        ridesJoined: 15,
-        ridesCreated: 8,
-      },
+      senderId: '1',
+      receiverId: '2',
       content: 'Hi everyone! Looking forward to the ride. Please make sure to bring water and a spare tube.',
       timestamp: new Date('2024-04-20T18:00:00'),
-      type: 'text',
+      rideId: id as string
     },
     {
       id: '2',
-      sender: currentUser,
+      senderId: '2',
+      receiverId: '1',
       content: 'What time should we arrive at the meeting point?',
       timestamp: new Date('2024-04-20T18:05:00'),
-      type: 'text',
-    },
+      rideId: id as string
+    }
   ]);
 
   const handleSend = () => {
     if (message.trim()) {
       const newMessage: ChatMessage = {
         id: Date.now().toString(),
-        sender: currentUser,
+        senderId: currentUser.id,
+        receiverId: '1',
         content: message.trim(),
         timestamp: new Date(),
-        type: 'text',
+        rideId: id as string
       };
       setMessages([...messages, newMessage]);
       setMessage('');
@@ -72,19 +67,19 @@ export default function RideChatScreen() {
   };
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
-    const isCurrentUser = item.sender.id === currentUser.id;
+    const isCurrentUser = item.senderId === currentUser.id;
 
     return (
       <View style={[styles.messageContainer, isCurrentUser ? styles.currentUserMessage : styles.otherUserMessage]}>
         {!isCurrentUser && (
           <View style={styles.avatarContainer}>
-            <Avatar.Text size={32} label={item.sender.name.split(' ').map(n => n[0]).join('')} />
+            <Avatar.Text size={32} label={item.senderId.split('').map(n => n[0]).join('')} />
           </View>
         )}
         <View style={[styles.messageContent, isCurrentUser ? styles.currentUserContent : styles.otherUserContent]}>
           {!isCurrentUser && (
             <Text variant="labelSmall" style={styles.senderName}>
-              {item.sender.name}
+              {item.senderId}
             </Text>
           )}
           <Surface style={[styles.messageBubble, isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble]}>

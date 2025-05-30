@@ -1,62 +1,148 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { sampleRides } from '../data/sampleRides';
-import { Ride } from '../../types/ride';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import type { Ride } from '../../shared/types/ride';
 
 interface RideContextType {
   rides: Ride[];
   savedRides: string[];
   participatedRides: string[];
+  loading: boolean;
+  error: string | null;
+  getRides: () => Promise<void>;
+  getRide: (id: string) => Promise<Ride | null>;
+  createRide: (ride: Omit<Ride, '_id'>) => Promise<void>;
+  updateRide: (id: string, ride: Partial<Ride>) => Promise<void>;
+  deleteRide: (id: string) => Promise<void>;
+  joinRide: (id: string) => Promise<void>;
+  leaveRide: (id: string) => Promise<void>;
+  addSavedRide: (rideId: string) => void;
+  removeSavedRide: (rideId: string) => void;
+  isRideSaved: (rideId: string) => boolean;
+  getSavedRides: () => Ride[];
+  addParticipatedRide: (rideId: string) => void;
+  removeParticipatedRide: (rideId: string) => void;
+  isRideParticipated: (rideId: string) => boolean;
   getParticipatedRides: () => Ride[];
-  toggleSaveRide: (rideId: string) => void;
-  isSaved: (rideId: string) => boolean;
-  addRide: (ride: Ride) => void;
-  updateRide: (ride: Ride) => void;
-  deleteRide: (rideId: string) => void;
-  getRide: (rideId: string) => Ride | undefined;
 }
 
 const RideContext = createContext<RideContextType | undefined>(undefined);
 
-export const RideProvider = ({ children }: { children: React.ReactNode }) => {
-  const [rides, setRides] = useState<Ride[]>(sampleRides);
+export function RideProvider({ children }: { children: ReactNode }) {
+  const [rides, setRides] = useState<Ride[]>([]);
   const [savedRides, setSavedRides] = useState<string[]>([]);
   const [participatedRides, setParticipatedRides] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const getParticipatedRides = useCallback(() => {
-    return rides.filter(ride => participatedRides.includes(ride.id));
-  }, [rides, participatedRides]);
-
-  const toggleSaveRide = useCallback((rideId: string) => {
-    setSavedRides(prev => {
-      if (prev.includes(rideId)) {
-        return prev.filter(id => id !== rideId);
-      } else {
-        return [...prev, rideId];
-      }
-    });
+  const getRides = useCallback(async () => {
+    try {
+      setLoading(true);
+      // TODO: Implement API call
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to fetch rides');
+      setLoading(false);
+    }
   }, []);
 
-  const isSaved = useCallback((rideId: string) => {
+  const getRide = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      // TODO: Implement API call
+      setLoading(false);
+      return null;
+    } catch (err) {
+      setError('Failed to fetch ride');
+      setLoading(false);
+      return null;
+    }
+  }, []);
+
+  const createRide = useCallback(async (ride: Omit<Ride, '_id'>) => {
+    try {
+      setLoading(true);
+      // TODO: Implement API call
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to create ride');
+      setLoading(false);
+    }
+  }, []);
+
+  const updateRide = useCallback(async (id: string, ride: Partial<Ride>) => {
+    try {
+      setLoading(true);
+      // TODO: Implement API call
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to update ride');
+      setLoading(false);
+    }
+  }, []);
+
+  const deleteRide = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      // TODO: Implement API call
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to delete ride');
+      setLoading(false);
+    }
+  }, []);
+
+  const joinRide = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      // TODO: Implement API call
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to join ride');
+      setLoading(false);
+    }
+  }, []);
+
+  const leaveRide = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      // TODO: Implement API call
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to leave ride');
+      setLoading(false);
+    }
+  }, []);
+
+  const addSavedRide = useCallback((rideId: string) => {
+    setSavedRides(prev => [...prev, rideId]);
+  }, []);
+
+  const removeSavedRide = useCallback((rideId: string) => {
+    setSavedRides(prev => prev.filter(id => id !== rideId));
+  }, []);
+
+  const isRideSaved = useCallback((rideId: string) => {
     return savedRides.includes(rideId);
   }, [savedRides]);
 
-  const addRide = useCallback((ride: Ride) => {
-    setRides(prev => [...prev, ride]);
+  const getSavedRides = useCallback(() => {
+    return rides.filter(ride => savedRides.includes(ride._id));
+  }, [rides, savedRides]);
+
+  const addParticipatedRide = useCallback((rideId: string) => {
+    setParticipatedRides(prev => [...prev, rideId]);
   }, []);
 
-  const updateRide = useCallback((updatedRide: Ride) => {
-    setRides(prev => prev.map(ride => 
-      ride.id === updatedRide.id ? updatedRide : ride
-    ));
+  const removeParticipatedRide = useCallback((rideId: string) => {
+    setParticipatedRides(prev => prev.filter(id => id !== rideId));
   }, []);
 
-  const deleteRide = useCallback((rideId: string) => {
-    setRides(prev => prev.filter(ride => ride.id !== rideId));
-  }, []);
+  const isRideParticipated = useCallback((rideId: string) => {
+    return participatedRides.includes(rideId);
+  }, [participatedRides]);
 
-  const getRide = useCallback((rideId: string) => {
-    return rides.find(ride => ride.id === rideId);
-  }, [rides]);
+  const getParticipatedRides = useCallback(() => {
+    return rides.filter(ride => participatedRides.includes(ride._id));
+  }, [rides, participatedRides]);
 
   return (
     <RideContext.Provider
@@ -64,24 +150,34 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
         rides,
         savedRides,
         participatedRides,
-        getParticipatedRides,
-        toggleSaveRide,
-        isSaved,
-        addRide,
+        loading,
+        error,
+        getRides,
+        getRide,
+        createRide,
         updateRide,
         deleteRide,
-        getRide,
+        joinRide,
+        leaveRide,
+        addSavedRide,
+        removeSavedRide,
+        isRideSaved,
+        getSavedRides,
+        addParticipatedRide,
+        removeParticipatedRide,
+        isRideParticipated,
+        getParticipatedRides,
       }}
     >
       {children}
     </RideContext.Provider>
   );
-};
+}
 
-export const useRides = () => {
+export function useRides() {
   const context = useContext(RideContext);
   if (context === undefined) {
     throw new Error('useRides must be used within a RideProvider');
   }
   return context;
-}; 
+} 

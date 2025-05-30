@@ -1,0 +1,8 @@
+---
+description: 
+globs: app/**/*.tsx
+alwaysApply: false
+---
+//描述: 对前端app的代码设计请执行如下规则
+使用函数式组件+React Hooks(拒绝类组件)
+严格遵守TypeScript严格模式(我是类型控)

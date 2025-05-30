@@ -2,7 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import { Surface, Text, Avatar, Button, Chip, IconButton } from 'react-native-paper';
 import { format } from 'date-fns';
 import { Ride } from '../../types/ride';
-import { useRides } from '../../context/RideContext';
+import { useRides } from '../context/RideContext';
 
 interface RideCardProps {
   ride: Ride;

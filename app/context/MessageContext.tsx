@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
-interface Message {
+export interface Message {
   id: string;
   senderId: string;
   receiverId: string;
@@ -10,21 +10,69 @@ interface Message {
   rideId?: string;
 }
 
+export interface ChatThread {
+  id: string;
+  participants: string[];
+  lastMessage?: Message;
+  unreadCount: number;
+}
+
 interface MessageContextType {
+  threads: ChatThread[];
   messages: Message[];
+  selectedThread: ChatThread | null;
+  selectThread: (thread: ChatThread) => void;
   sendMessage: (message: Message) => void;
+  getThreadMessages: (threadId: string) => Message[];
   getMessagesForUser: (userId: string) => Message[];
   getMessagesForRide: (rideId: string) => Message[];
 }
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
-export const MessageProvider = ({ children }: { children: React.ReactNode }) => {
+export function MessageProvider({ children }: { children: ReactNode }) {
+  const [threads, setThreads] = useState<ChatThread[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedThread, setSelectedThread] = useState<ChatThread | null>(null);
+
+  const selectThread = useCallback((thread: ChatThread) => {
+    setSelectedThread(thread);
+  }, []);
 
   const sendMessage = useCallback((message: Message) => {
-    setMessages(prevMessages => [...prevMessages, message]);
+    setMessages(prev => [...prev, message]);
+    
+    // Update or create thread
+    const threadId = `${message.senderId}-${message.receiverId}`;
+    setThreads(prev => {
+      const existingThread = prev.find(t => t.id === threadId);
+      if (existingThread) {
+        return prev.map(thread => 
+          thread.id === threadId 
+            ? { ...thread, lastMessage: message, unreadCount: thread.unreadCount + 1 }
+            : thread
+        );
+      } else {
+        // Create new thread
+        const newThread: ChatThread = {
+          id: threadId,
+          participants: [message.senderId, message.receiverId],
+          lastMessage: message,
+          unreadCount: 1,
+        };
+        return [...prev, newThread];
+      }
+    });
   }, []);
+
+  const getThreadMessages = useCallback((threadId: string) => {
+    return messages.filter(message => {
+      const thread = threads.find(t => t.id === threadId);
+      if (!thread) return false;
+      return thread.participants.includes(message.senderId) && 
+             thread.participants.includes(message.receiverId);
+    });
+  }, [messages, threads]);
 
   const getMessagesForUser = useCallback((userId: string) => {
     return messages.filter(
@@ -37,10 +85,14 @@ export const MessageProvider = ({ children }: { children: React.ReactNode }) => 
   }, [messages]);
 
   return (
-    <MessageContext.Provider
+    <MessageContext.Provider 
       value={{
+        threads,
         messages,
+        selectedThread,
+        selectThread,
         sendMessage,
+        getThreadMessages,
         getMessagesForUser,
         getMessagesForRide,
       }}
@@ -48,12 +100,12 @@ export const MessageProvider = ({ children }: { children: React.ReactNode }) => 
       {children}
     </MessageContext.Provider>
   );
-};
+}
 
-export const useMessages = () => {
+export function useMessages() {
   const context = useContext(MessageContext);
   if (context === undefined) {
     throw new Error('useMessages must be used within a MessageProvider');
   }
   return context;
-}; 
+} 

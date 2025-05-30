@@ -5,8 +5,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import { format } from 'date-fns';
 import { PaceLevelRanges, PaceLevel } from '../../types/ride';
-import { useMessages } from '../../context/MessageContext';
-import { useRides } from '../../context/RideContext';
+import { useMessages } from '../context/MessageContext';
+import { useRides } from '../context/RideContext';
 
 export default function RideDetailsScreen() {
   const router = useRouter();
