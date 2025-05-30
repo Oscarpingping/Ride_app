@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import {
   Searchbar,
   Button,
@@ -28,6 +28,8 @@ import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import MessagesScreen from './messages';
 import { sampleRides } from './data/sampleRides';
 import { RideCard } from './components/RideCard';
+import { ClubCard } from './components/ClubCard';
+import { useClubs } from './context/ClubContext';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -41,19 +43,19 @@ export default function HomeScreen() {
     { key: 'home', title: 'Home', focusedIcon: 'home', unfocusedIcon: 'home-outline' },
     { key: 'messages', title: 'Messages', focusedIcon: 'message', unfocusedIcon: 'message-outline' },
     { key: 'create', title: 'Create', focusedIcon: 'plus-circle', unfocusedIcon: 'plus-circle-outline' },
-    { key: 'saved', title: 'Saved', focusedIcon: 'bookmark', unfocusedIcon: 'bookmark-outline' },
+    { key: 'clubs', title: 'Clubs', focusedIcon: 'account-group', unfocusedIcon: 'account-group-outline' },
     { key: 'profile', title: 'Profile', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
   ]);
 
   const { rides, toggleSaveRide, isSaved } = useRides();
+  const { clubs, loading, error, getClubs } = useClubs();
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    // TODO: Implement refresh logic
-    setTimeout(() => {
+    getClubs().finally(() => {
       setRefreshing(false);
-    }, 1000);
-  }, []);
+    });
+  }, [getClubs]);
 
   const filteredRides = useMemo(() => {
     return rides.filter(ride => {
@@ -415,28 +417,49 @@ export default function HomeScreen() {
     </View>
   );
 
-  const SavedRidesScreen = () => {
-    const { getSavedRides } = useRides();
-    const savedRides = getSavedRides();
-
+  const ClubsScreen = () => {
     return (
       <View style={styles.sceneContainer}>
         <Appbar.Header>
-          <Appbar.Content title="Saved Rides" />
+          <Appbar.Content title="Clubs" />
+          <Appbar.Action icon="plus" onPress={() => router.push('/create-club')} />
         </Appbar.Header>
-        <ScrollView style={styles.content}>
-          {savedRides.length > 0 ? (
-            savedRides.map((ride) => (
-              <RideCard
-                key={ride.id}
-                ride={ride}
-                onPress={() => router.push(`/ride/${ride.id}`)}
+        <ScrollView 
+          style={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" />
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Text variant="titleMedium">{error}</Text>
+              <Button mode="contained" onPress={onRefresh} style={styles.retryButton}>
+                Retry
+              </Button>
+            </View>
+          ) : clubs.length > 0 ? (
+            clubs.map((club) => (
+              <ClubCard
+                key={club._id}
+                club={club}
+                onPress={() => router.push(`/club/${club._id}`)}
               />
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Text variant="titleMedium">No saved rides</Text>
-              <Text variant="bodyMedium">Save rides to find them here later</Text>
+              <Text variant="titleMedium">No clubs found</Text>
+              <Text variant="bodyMedium">Be the first to create a club!</Text>
+              <Button 
+                mode="contained" 
+                onPress={() => router.push('/create-club')}
+                style={styles.createButton}
+              >
+                Create Club
+              </Button>
             </View>
           )}
         </ScrollView>
@@ -458,7 +481,7 @@ export default function HomeScreen() {
     home: HomeContent,
     messages: MessagesScreen,
     create: () => null,
-    saved: SavedRidesScreen,
+    clubs: ClubsScreen,
     profile: () => null,
   });
 
@@ -633,5 +656,22 @@ const styles = StyleSheet.create({
   },
   clubText: {
     marginTop: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  retryButton: {
+    marginTop: 20,
+  },
+  createButton: {
+    marginTop: 20,
   },
 }); 
