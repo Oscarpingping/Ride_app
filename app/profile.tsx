@@ -18,6 +18,7 @@ export default function ProfileScreen() {
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showCreateClubModal, setShowCreateClubModal] = useState(false);
   const [showJoinClubModal, setShowJoinClubModal] = useState(false);
+  const [userDismissedModal, setUserDismissedModal] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
     name: '',
@@ -36,10 +37,10 @@ export default function ProfileScreen() {
   const [clubs, setClubs] = useState<Club[]>([]);
 
   useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
+    if (!isAuthenticated && !isLoading && !userDismissedModal) {
       setShowLoginModal(true);
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, userDismissedModal]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -152,10 +153,16 @@ export default function ProfileScreen() {
           <Text style={styles.authTitle}>Welcome to WildPals</Text>
           <Text style={styles.authSubtitle}>Please login or register to continue</Text>
           <View style={styles.authButtons}>
-            <Button mode="contained" onPress={() => setShowLoginModal(true)} style={styles.authButton}>
+            <Button mode="contained" onPress={() => {
+              setShowLoginModal(true);
+              setUserDismissedModal(false);
+            }} style={styles.authButton}>
               Login
             </Button>
-            <Button mode="outlined" onPress={() => setShowRegisterModal(true)} style={styles.authButton}>
+            <Button mode="outlined" onPress={() => {
+              setShowRegisterModal(true);
+              setUserDismissedModal(false);
+            }} style={styles.authButton}>
               Register
             </Button>
           </View>
@@ -164,10 +171,25 @@ export default function ProfileScreen() {
         <Portal>
           <Modal
             visible={showLoginModal}
-            onDismiss={() => setShowLoginModal(false)}
+            onDismiss={() => {
+              setShowLoginModal(false);
+              setUserDismissedModal(true);
+            }}
             contentContainerStyle={styles.modalContainer}
           >
-            <Text style={styles.modalTitle}>Login</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Login</Text>
+              <Button 
+                mode="text" 
+                onPress={() => {
+                  setShowLoginModal(false);
+                  setUserDismissedModal(true);
+                }}
+                style={styles.closeButton}
+              >
+                ✕
+              </Button>
+            </View>
             <TextInput
               label="Email"
               value={loginData.email}
@@ -191,10 +213,25 @@ export default function ProfileScreen() {
 
           <Modal
             visible={showRegisterModal}
-            onDismiss={() => setShowRegisterModal(false)}
+            onDismiss={() => {
+              setShowRegisterModal(false);
+              setUserDismissedModal(true);
+            }}
             contentContainerStyle={styles.modalContainer}
           >
-            <Text style={styles.modalTitle}>Register</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Register</Text>
+              <Button 
+                mode="text" 
+                onPress={() => {
+                  setShowRegisterModal(false);
+                  setUserDismissedModal(true);
+                }}
+                style={styles.closeButton}
+              >
+                ✕
+              </Button>
+            </View>
             <TextInput
               label="Name"
               value={registerData.name}
@@ -518,10 +555,19 @@ const styles = StyleSheet.create({
     margin: 20,
     borderRadius: 8,
   },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    flex: 1,
+  },
+  closeButton: {
+    minWidth: 40,
   },
   input: {
     marginBottom: 15,
