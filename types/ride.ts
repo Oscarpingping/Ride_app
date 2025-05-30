@@ -46,8 +46,12 @@ export const PaceLevelRanges: Record<PaceLevel, { minSpeed: number; maxSpeed: nu
   Fast: { minSpeed: 25, maxSpeed: 35 },
 };
 
+// 使用统一的用户类型定义
+import { User as UnifiedUser, UserSummary } from '../shared/types/user-unified';
+
+// 为了向后兼容，保留User接口但映射到统一定义
 export interface User {
-  id: string;
+  id: string; // 注意：这里保持id而不是_id，为了兼容现有代码
   name: string;
   email: string;
   rating: number;
@@ -60,6 +64,9 @@ export interface User {
     phone: string;
   };
 }
+
+// 推荐使用的新类型
+export { UnifiedUser, UserSummary };
 
 export type PaceRange = {
   minSpeed: number; // km/h

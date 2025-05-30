@@ -1,10 +1,13 @@
-export interface User {
-  id: string;
-  username: string;
-  avatar?: string;
-  status?: 'online' | 'offline' | 'away';
-  lastSeen?: Date;
-}
+// 使用统一的Socket用户类型定义
+import { SocketUser, UserStatus } from './user-unified';
+
+export interface User extends SocketUser {}
+
+// 为了向后兼容，保留旧的状态类型
+export type UserStatusLegacy = 'online' | 'offline' | 'away';
+
+// 重新导出统一的类型
+export { SocketUser, UserStatus };
 
 export interface Message {
   id: string;

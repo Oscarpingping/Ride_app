@@ -1,11 +1,8 @@
-export interface User {
-  _id: string;
-  email: string;
-  name: string;
-  avatar?: string;
+// 使用统一的用户类型定义
+import { BaseUser } from './user-unified';
+
+export interface User extends BaseUser {
   bio?: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface Chat {

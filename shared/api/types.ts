@@ -13,33 +13,23 @@ export interface PaginatedResponse<T> {
   pageSize: number;
 }
 
+// 使用统一的用户类型定义
+import { 
+  AuthUser, 
+  LoginRequest as UnifiedLoginRequest, 
+  RegisterRequest as UnifiedRegisterRequest, 
+  UpdateProfileRequest as UnifiedUpdateProfileRequest 
+} from '../types/user-unified';
+
 export interface AuthResponse {
   token: string;
   refreshToken: string;
-  user: {
-    _id: string;
-    email: string;
-    name: string;
-    avatar?: string;
-  };
+  user: AuthUser;
 }
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  name: string;
-}
-
-export interface UpdateProfileRequest {
-  name?: string;
-  avatar?: string;
-  bio?: string;
-}
+export interface LoginRequest extends UnifiedLoginRequest {}
+export interface RegisterRequest extends UnifiedRegisterRequest {}
+export interface UpdateProfileRequest extends UnifiedUpdateProfileRequest {}
 
 export interface CreateRideRequest {
   title: string;

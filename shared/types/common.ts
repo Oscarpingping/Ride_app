@@ -5,13 +5,20 @@ export interface Location {
   address?: string;
 }
 
+// 使用统一的用户类型定义
+import { UserSummary } from './user-unified';
+
+// 为了向后兼容，保留User接口但使用统一的定义
 export interface User {
-  id: string;
+  id: string; // 注意：这里保持id而不是_id，为了兼容现有代码
   name: string;
   email: string;
   avatar?: string;
   rating?: number;
 }
+
+// 推荐使用的新类型
+export { UserSummary };
 
 export interface Participant {
   id: string;

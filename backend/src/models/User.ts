@@ -1,6 +1,10 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+// 导入统一的类型定义
+import { User, ClubReference, EmergencyContact } from '../../../shared/types/user-unified';
+
+// 后端用户接口，继承统一定义并添加Document和方法
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -18,12 +22,10 @@ export interface IUser extends Document {
   }[];
   createdAt: Date;
   updatedAt: Date;
-  profilePicture?: string;
-  emergencyContact?: {
-    name: string;
-    phone: string;
-  };
+  profilePicture?: string; // 兼容字段，实际使用avatar
+  emergencyContact?: EmergencyContact;
   comparePassword(candidatePassword: string): Promise<boolean>;
+  toJSON(): User; // 转换为前端类型的方法
 }
 
 const userSchema = new Schema<IUser>(
@@ -109,6 +111,35 @@ userSchema.pre('save', async function (next) {
 // 密码比较方法
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
+};
+
+// 转换为前端类型的方法
+userSchema.methods.toJSON = function (): User {
+  const userObject = this.toObject();
+  
+  // 移除敏感信息
+  delete userObject.password;
+  
+  // 确保使用avatar字段（如果profilePicture存在但avatar不存在）
+  if (userObject.profilePicture && !userObject.avatar) {
+    userObject.avatar = userObject.profilePicture;
+  }
+  
+  // 转换ObjectId为字符串
+  if (userObject.createdRides) {
+    userObject.createdRides = userObject.createdRides.map((id: mongoose.Types.ObjectId) => id.toString());
+  }
+  if (userObject.joinedRides) {
+    userObject.joinedRides = userObject.joinedRides.map((id: mongoose.Types.ObjectId) => id.toString());
+  }
+  if (userObject.clubs) {
+    userObject.clubs = userObject.clubs.map((clubRef: any) => ({
+      club: clubRef.club.toString(),
+      joinedAt: clubRef.joinedAt
+    }));
+  }
+  
+  return userObject as User;
 };
 
 export const User = mongoose.model<IUser>('User', userSchema); 
