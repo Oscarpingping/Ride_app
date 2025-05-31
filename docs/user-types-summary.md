@@ -12,7 +12,7 @@
 - ✅ `shared/types/entities.ts` - 继承BaseUser
 - ✅ `shared/types/socket.ts` - 继承SocketUser  
 - ✅ `shared/types/common.ts` - 保留兼容接口
-- ✅ `shared/types/contact.ts` - 使用Friend类型
+- ✅ `shared/types/contact.ts` - 联系人类型定义
 - ✅ `types/ride.ts` - 保留兼容接口
 - ✅ `shared/api/types.ts` - 使用统一的认证类型
 
@@ -22,7 +22,7 @@
 - ✅ 确保前后端类型一致性
 
 ### 4. 创建文档和工具
-- ✅ `docs/type-migration-guide.md` - 详细的迁移指南
+- ✅ `docs/data-models.md` - 详细的数据模型文档
 - ✅ `docs/type-reference-map.md` - 引用关系图
 - ✅ `scripts/validate-types.ts` - 类型验证脚本
 
@@ -68,10 +68,9 @@ AuthUser      // 认证信息
 
 ### 扩展类型
 ```typescript
-Friend           // 好友关系
-FriendRequest    // 好友请求
 ClubReference    // 俱乐部引用
 EmergencyContact // 紧急联系人
+Contact          // 联系人关系
 ```
 
 ### 工具函数
@@ -114,6 +113,7 @@ import { User } from '../shared/types/user';
 - **公开用户信息** → `UserPublic`
 - **Socket连接** → `SocketUser`
 - **登录响应** → `AuthUser`
+- **联系人管理** → `Contact`
 
 ## 验证方法
 
@@ -153,19 +153,19 @@ grep -r "import.*User" --include="*.ts" --include="*.tsx" .
 
 ### 核心文件
 - `shared/types/user-unified.ts` - 统一类型定义
+- `shared/types/contact.ts` - 联系人类型定义
 
 ### 更新的文件
 - `shared/types/user.ts`
 - `shared/types/entities.ts`
 - `shared/types/socket.ts`
 - `shared/types/common.ts`
-- `shared/types/contact.ts`
 - `types/ride.ts`
 - `shared/api/types.ts`
 - `backend/src/models/User.ts`
 
 ### 新增文件
-- `docs/type-migration-guide.md`
+- `docs/data-models.md`
 - `docs/type-reference-map.md`
 - `docs/user-types-summary.md`
 - `scripts/validate-types.ts`

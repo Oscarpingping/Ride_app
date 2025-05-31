@@ -22,7 +22,10 @@ export interface User extends BaseUser {
   createdRides?: string[];
   joinedRides?: string[];
   clubs?: ClubReference[];
-  profilePicture?: string; // 兼容旧字段名，实际使用avatar
+  createdClubs?: string[];      // 用户创建的俱乐部ID列表
+  managedClubs?: string[];      // 用户管理的俱乐部列表
+  canCreateClub: boolean;       // 用户创建俱乐部的权限
+  profilePicture?: string;      // 兼容旧字段名，实际使用avatar
   emergencyContact?: EmergencyContact;
   // 密码字段仅在后端使用，前端不包含
   password?: never;
@@ -42,6 +45,8 @@ export interface UserPublic extends BaseUser {
   rating?: number;
   ridesJoined?: number;
   ridesCreated?: number;
+  createdClubs?: string[];      // 用户创建的俱乐部ID列表
+  managedClubs?: string[];      // 用户管理的俱乐部列表
   // 不包含敏感信息如email等
 }
 
@@ -87,6 +92,10 @@ export interface AuthUser {
   email: string;
   name: string;
   avatar?: string;
+  canCreateClub: boolean;       // 用户创建俱乐部的权限
+  rating?: number;
+  createdClubs?: string[];      // 用户创建的俱乐部列表
+  managedClubs?: string[];      // 用户管理的俱乐部列表
 }
 
 // API请求类型
@@ -106,34 +115,6 @@ export interface UpdateProfileRequest {
   avatar?: string;
   bio?: string;
   emergencyContact?: EmergencyContact;
-}
-
-// 好友相关类型
-export interface Friend {
-  _id: string;
-  userId: string;
-  friendId: string;
-  friend: UserSummary;
-  description?: string; // 用户为好友添加的描述
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface FriendRequest {
-  _id: string;
-  fromUserId: string;
-  toUserId: string;
-  fromUser: UserSummary;
-  toUser: UserSummary;
-  status: FriendRequestStatus;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export enum FriendRequestStatus {
-  PENDING = 'pending',
-  ACCEPTED = 'accepted',
-  REJECTED = 'rejected'
 }
 
 // 类型守卫函数
@@ -175,6 +156,10 @@ export function toAuthUser(user: User): AuthUser {
     _id: user._id,
     email: user.email,
     name: user.name,
-    avatar: user.avatar
+    avatar: user.avatar,
+    canCreateClub: user.canCreateClub,
+    rating: user.rating,
+    createdClubs: user.createdClubs,
+    managedClubs: user.managedClubs
   };
 }

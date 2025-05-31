@@ -10,8 +10,6 @@ shared/types/user-unified.ts (核心定义)
 ├── UserPublic (公开信息)
 ├── SocketUser (Socket连接)
 ├── AuthUser (认证信息)
-├── Friend (好友关系)
-├── FriendRequest (好友请求)
 └── 工具函数 (类型转换和守卫)
 ```
 
@@ -25,7 +23,7 @@ shared/types/user-unified.ts (核心定义)
 - `shared/types/entities.ts` → 继承 `BaseUser`
 - `shared/types/socket.ts` → 继承 `SocketUser`
 - `shared/types/common.ts` → 保留兼容接口
-- `shared/types/contact.ts` → 使用 `Friend` 类型
+- `shared/types/contact.ts` → 联系人类型定义
 - `types/ride.ts` → 保留兼容接口
 
 ### API层文件
@@ -43,7 +41,7 @@ shared/types/user-unified.ts (核心定义)
 | 公开用户信息 | `UserPublic` | `shared/types/user-unified.ts` |
 | Socket连接 | `SocketUser` | `shared/types/user-unified.ts` |
 | 登录响应 | `AuthUser` | `shared/types/user-unified.ts` |
-| 好友系统 | `Friend` | `shared/types/user-unified.ts` |
+| 联系人管理 | `Contact` | `shared/types/contact.ts` |
 | 数据库模型 | `IUser` | `backend/src/models/User.ts` |
 
 ## 导入示例
@@ -60,8 +58,8 @@ import { AuthUser, LoginRequest, RegisterRequest } from '../shared/types/user-un
 // Socket层
 import { SocketUser, UserStatus, toSocketUser } from '../shared/types/user-unified';
 
-// 好友系统
-import { Friend, FriendRequest, FriendRequestStatus } from '../shared/types/user-unified';
+// 联系人管理
+import { Contact } from '../shared/types/contact';
 ```
 
 ### 兼容性导入（逐步迁移）

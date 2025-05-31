@@ -6,6 +6,7 @@ import { ApiResponse } from '../../../shared/api/types';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
 
+// 用户注册控制器
 export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
@@ -15,15 +16,26 @@ export const register = async (req: Request, res: Response) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        error: '该邮箱已被注册',
+        error: 'Email already registered. Please sign in or use a different email',
       } as ApiResponse);
     }
 
-    // 创建新用户
+    // 创建新用户，设置默认值
     const user = new User({
       name,
       email,
       password,
+      rating: 0,
+      ridesJoined: 0,
+      ridesCreated: 0,
+      createdRides: [],
+      joinedRides: [],
+      clubs: [],
+      createdClubs: [],
+      managedClubs: [],
+      canCreateClub: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
 
     await user.save();
@@ -38,24 +50,32 @@ export const register = async (req: Request, res: Response) => {
         token,
         refreshToken,
         user: {
-          id: user._id,
+          _id: user._id,
           name: user.name,
           email: user.email,
           avatar: user.avatar,
           bio: user.bio,
+          rating: user.rating,
+          ridesJoined: user.ridesJoined,
+          ridesCreated: user.ridesCreated,
+          createdClubs: user.createdClubs,
+          managedClubs: user.managedClubs,
+          canCreateClub: user.canCreateClub,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         },
       },
     } as ApiResponse);
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({
       success: false,
-      error: '注册失败，请稍后重试',
+      error: 'Registration failed, please try again later',
     } as ApiResponse);
   }
 };
 
+// 用户登录控制器
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -65,7 +85,7 @@ export const login = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: '邮箱或密码错误',
+        error: 'Invalid email or password',
       } as ApiResponse);
     }
 
@@ -74,7 +94,7 @@ export const login = async (req: Request, res: Response) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        error: '邮箱或密码错误',
+        error: 'Invalid email or password',
       } as ApiResponse);
     }
 
@@ -88,24 +108,32 @@ export const login = async (req: Request, res: Response) => {
         token,
         refreshToken,
         user: {
-          id: user._id,
+          _id: user._id,
           name: user.name,
           email: user.email,
           avatar: user.avatar,
           bio: user.bio,
+          rating: user.rating,
+          ridesJoined: user.ridesJoined,
+          ridesCreated: user.ridesCreated,
+          createdClubs: user.createdClubs,
+          managedClubs: user.managedClubs,
+          canCreateClub: user.canCreateClub,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         },
       },
     } as ApiResponse);
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({
       success: false,
-      error: '登录失败，请稍后重试',
+      error: 'Login failed, please try again later',
     } as ApiResponse);
   }
 };
 
+// Token 刷新控制器
 export const refreshToken = async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
@@ -113,7 +141,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     if (!refreshToken) {
       return res.status(401).json({
         success: false,
-        error: '未提供刷新令牌',
+        error: 'No refresh token provided',
       } as ApiResponse);
     }
 
@@ -124,7 +152,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: '无效的刷新令牌',
+        error: 'Invalid refresh token',
       } as ApiResponse);
     }
 
@@ -140,11 +168,12 @@ export const refreshToken = async (req: Request, res: Response) => {
   } catch (error) {
     res.status(401).json({
       success: false,
-      error: '无效的刷新令牌',
+      error: 'Invalid refresh token',
     } as ApiResponse);
   }
 };
 
+// 用户登出控制器
 export const logout = async (req: Request, res: Response) => {
   try {
     // 在实际应用中，你可能需要将令牌加入黑名单
@@ -155,7 +184,7 @@ export const logout = async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: '登出失败，请稍后重试',
+      error: 'Logout failed, please try again later',
     } as ApiResponse);
   }
 }; 

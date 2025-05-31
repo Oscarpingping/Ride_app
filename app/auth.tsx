@@ -1,30 +1,70 @@
 import { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { Text, TextInput, Button, Surface } from 'react-native-paper';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Linking } from 'react-native';
+import { Text, TextInput, Button, Surface, HelperText } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from './context/AuthContext';
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { login, register } = useAuth();
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    return password.length >= 6;
+  };
 
   const handleSubmit = async () => {
     try {
       setError('');
+      setIsLoading(true);
+
+      if (!validateEmail(email)) {
+        setError('Please enter a valid email address');
+        return;
+      }
+
       if (isLogin) {
+        if (!validatePassword(password)) {
+          setError('Password must be at least 6 characters');
+          return;
+        }
         await login({ email, password });
       } else {
+        if (!name.trim()) {
+          setError('Please enter your name');
+          return;
+        }
+        if (!validatePassword(password)) {
+          setError('Password must be at least 6 characters');
+          return;
+        }
         await register({ email, password, name });
       }
       router.replace('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Operation failed, please try again');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    // TODO: 实现找回密码功能
+    Linking.openURL(`mailto:support@wildpals.com?subject=Password Recovery&body=My email is: ${email}`);
   };
 
   return (
@@ -45,6 +85,8 @@ export default function AuthScreen() {
               onChangeText={setName}
               style={styles.input}
               mode="outlined"
+              autoCapitalize="none"
+              disabled={isLoading}
             />
           )}
           
@@ -56,39 +98,59 @@ export default function AuthScreen() {
             mode="outlined"
             keyboardType="email-address"
             autoCapitalize="none"
+            disabled={isLoading}
           />
           
-          <TextInput
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            style={styles.input}
-            mode="outlined"
-            secureTextEntry
-          />
+          {!isForgotPassword && (
+            <TextInput
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              style={styles.input}
+              mode="outlined"
+              secureTextEntry
+              disabled={isLoading}
+            />
+          )}
           
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <HelperText type="error" visible={true}>{error}</HelperText> : null}
           
           <Button
             mode="contained"
             onPress={handleSubmit}
             style={styles.button}
+            loading={isLoading}
+            disabled={isLoading}
           >
-            {isLogin ? 'Login' : 'Sign Up'}
+            {isLogin ? 'Sign In' : 'Sign Up'}
           </Button>
 
           {isLogin && (
-            <View style={styles.registerPrompt}>
-              <Text variant="bodyMedium" style={styles.registerText}>
-                New to WildPals?
-              </Text>
+            <View style={styles.actionsContainer}>
               <Button
                 mode="text"
-                onPress={() => setIsLogin(false)}
-                style={styles.registerButton}
+                onPress={() => setIsForgotPassword(!isForgotPassword)}
+                style={styles.actionButton}
               >
-                Create an account
+                {isForgotPassword ? 'Back to Sign In' : 'Forgot Password?'}
               </Button>
+              {isForgotPassword ? (
+                <Button
+                  mode="contained-tonal"
+                  onPress={handleForgotPassword}
+                  style={styles.actionButton}
+                >
+                  Send Reset Email
+                </Button>
+              ) : (
+                <Button
+                  mode="text"
+                  onPress={() => setIsLogin(false)}
+                  style={styles.actionButton}
+                >
+                  New User? Sign Up
+                </Button>
+              )}
             </View>
           )}
 
@@ -98,7 +160,7 @@ export default function AuthScreen() {
               onPress={() => setIsLogin(true)}
               style={styles.switchButton}
             >
-              Already have an account? Login
+              Already have an account? Sign In
             </Button>
           )}
         </Surface>
@@ -132,21 +194,14 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 8,
   },
-  error: {
-    color: 'red',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  registerPrompt: {
+  actionsContainer: {
     marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  registerText: {
-    marginBottom: 8,
-    color: '#666',
-  },
-  registerButton: {
-    marginTop: 4,
+  actionButton: {
+    flex: 1,
   },
   switchButton: {
     marginTop: 16,

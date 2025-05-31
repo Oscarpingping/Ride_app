@@ -186,4 +186,21 @@ clubSchema.index({ tags: 1 });
 clubSchema.index({ 'joinRequests.pending.user': 1 });
 clubSchema.index({ 'joinRequests.history.user': 1 });
 
+// 新增：创建俱乐部时自动将创建者添加为管理员
+clubSchema.pre('save', async function(next) {
+  if (this.isNew) {
+    // 确保创建者在admins列表中
+    if (!this.admins.includes(this.founder)) {
+      this.admins.push(this.founder);
+    }
+    // 确保创建者在members列表中
+    if (!this.members.includes(this.founder)) {
+      this.members.push(this.founder);
+    }
+    // 更新成员数量
+    this.stats.memberCount = this.members.length;
+  }
+  next();
+});
+
 export const Club = mongoose.model<IClub>('Club', clubSchema); 
