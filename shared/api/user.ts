@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { User } from '../types/user';
+import { API_BASE_URL } from '../config';
 
 export interface LoginRequest {
   email: string;
@@ -26,7 +27,7 @@ export interface ApiResponse<T> {
 export const UserApi = {
   async login(data: LoginRequest): Promise<ApiResponse<AuthResponse>> {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,7 +46,7 @@ export const UserApi = {
 
   async register(data: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +65,7 @@ export const UserApi = {
 
   async getCurrentUser(): Promise<ApiResponse<User>> {
     try {
-      const response = await fetch('http://localhost:5001/api/users/me', {
+      const response = await fetch(`${API_BASE_URL}/api/users/me`, {
         headers: {
           'Authorization': `Bearer ${await AsyncStorage.getItem('token')}`,
         },
@@ -81,13 +82,32 @@ export const UserApi = {
 
   async updateUser(data: Partial<User>): Promise<ApiResponse<User>> {
     try {
-      const response = await fetch('http://localhost:5001/api/users/me', {
+      const response = await fetch(`${API_BASE_URL}/api/users/me`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${await AsyncStorage.getItem('token')}`,
         },
         body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Network error occurred',
+      };
+    }
+  },
+
+  async requestPasswordReset(email: string): Promise<ApiResponse<{ message: string }>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
       });
       const result = await response.json();
       return result;

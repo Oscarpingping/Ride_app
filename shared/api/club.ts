@@ -1,4 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Club } from '../types/club';
+import { API_BASE_URL } from '../config';
 
 export interface CreateClubRequest {
   name: string;
@@ -13,14 +15,20 @@ export interface ApiResponse<T> {
 }
 
 export const ClubApi = {
+  async getAuthHeaders() {
+    const token = await AsyncStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  },
+
   createClub: async (data: CreateClubRequest): Promise<ApiResponse<Club>> => {
     try {
-      const response = await fetch('/api/clubs', {
+      const headers = await ClubApi.getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/api/clubs`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        headers,
         body: JSON.stringify(data)
       });
       const result = await response.json();
@@ -39,10 +47,9 @@ export const ClubApi = {
 
   getClubs: async (): Promise<ApiResponse<Club[]>> => {
     try {
-      const response = await fetch('/api/clubs', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const headers = await ClubApi.getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/api/clubs`, {
+        headers
       });
       const result = await response.json();
       return {
@@ -60,10 +67,9 @@ export const ClubApi = {
 
   getUserClubs: async (): Promise<ApiResponse<Club[]>> => {
     try {
-      const response = await fetch('/api/clubs/user', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const headers = await ClubApi.getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/api/clubs/user`, {
+        headers
       });
       const result = await response.json();
       return {
@@ -81,11 +87,10 @@ export const ClubApi = {
 
   joinClub: async (clubId: string): Promise<ApiResponse<Club>> => {
     try {
-      const response = await fetch(`/api/clubs/${clubId}/join`, {
+      const headers = await ClubApi.getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/api/clubs/${clubId}/join`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        headers
       });
       const result = await response.json();
       return {

@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 import { useRides } from './context/RideContext';
 import { ClubApi } from '../shared/api/club';
 import { ContactApi } from '../shared/api/contact';
+import { UserApi } from '../shared/api/user';
 import type { User } from '../shared/types/user';
 import type { Ride } from '../shared/types/ride';
 import type { Club } from '../shared/types/club';
@@ -18,6 +19,7 @@ export default function ProfileScreen() {
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showCreateClubModal, setShowCreateClubModal] = useState(false);
   const [showJoinClubModal, setShowJoinClubModal] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
     name: '',
@@ -25,6 +27,7 @@ export default function ProfileScreen() {
     password: '',
     confirmPassword: '',
   });
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [clubData, setClubData] = useState({
     name: '',
@@ -105,9 +108,23 @@ export default function ProfileScreen() {
     }
   };
 
+  // Validation functions
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password: string): boolean => {
+    return password.length >= 6;
+  };
+
   const handleLogin = async () => {
     if (!loginData.email || !loginData.password) {
       setFormError('Please fill in all fields');
+      return;
+    }
+    if (!validateEmail(loginData.email)) {
+      setFormError('Please enter a valid email address');
       return;
     }
     setFormError(null);
@@ -122,6 +139,14 @@ export default function ProfileScreen() {
       setFormError('Please fill in all fields');
       return;
     }
+    if (!validateEmail(registerData.email)) {
+      setFormError('Please enter a valid email address');
+      return;
+    }
+    if (!validatePassword(registerData.password)) {
+      setFormError('Password must be at least 6 characters long');
+      return;
+    }
     if (registerData.password !== registerData.confirmPassword) {
       setFormError('Passwords do not match');
       return;
@@ -134,6 +159,33 @@ export default function ProfileScreen() {
     });
     if (!error) {
       setShowRegisterModal(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotPasswordEmail) {
+      setFormError('Please enter your email address');
+      return;
+    }
+    if (!validateEmail(forgotPasswordEmail)) {
+      setFormError('Please enter a valid email address');
+      return;
+    }
+    
+    setFormError(null);
+    try {
+      const response = await UserApi.requestPasswordReset(forgotPasswordEmail);
+      if (response.success) {
+        setFormError(null);
+        setShowForgotPasswordModal(false);
+        setForgotPasswordEmail('');
+        // Show success message (you might want to add a success state)
+        alert('Password reset email sent! Please check your inbox.');
+      } else {
+        setFormError(response.error || 'Failed to send reset email');
+      }
+    } catch (error) {
+      setFormError('Network error occurred');
     }
   };
 
@@ -187,6 +239,16 @@ export default function ProfileScreen() {
             <Button mode="contained" onPress={handleLogin} style={styles.modalButton}>
               Login
             </Button>
+            <Button 
+              mode="text" 
+              onPress={() => {
+                setShowLoginModal(false);
+                setShowForgotPasswordModal(true);
+              }} 
+              style={styles.forgotPasswordButton}
+            >
+              Forgot Password?
+            </Button>
           </Modal>
 
           <Modal
@@ -226,6 +288,39 @@ export default function ProfileScreen() {
             {(error || formError) && <Text style={styles.errorText}>{error || formError}</Text>}
             <Button mode="contained" onPress={handleRegister} style={styles.modalButton}>
               Register
+            </Button>
+          </Modal>
+
+          <Modal
+            visible={showForgotPasswordModal}
+            onDismiss={() => setShowForgotPasswordModal(false)}
+            contentContainerStyle={styles.modalContainer}
+          >
+            <Text style={styles.modalTitle}>Reset Password</Text>
+            <Text style={styles.modalSubtitle}>
+              Enter your email address and we'll send you a link to reset your password.
+            </Text>
+            <TextInput
+              label="Email"
+              value={forgotPasswordEmail}
+              onChangeText={setForgotPasswordEmail}
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            {formError && <Text style={styles.errorText}>{formError}</Text>}
+            <Button mode="contained" onPress={handleForgotPassword} style={styles.modalButton}>
+              Send Reset Email
+            </Button>
+            <Button 
+              mode="text" 
+              onPress={() => {
+                setShowForgotPasswordModal(false);
+                setShowLoginModal(true);
+              }} 
+              style={styles.forgotPasswordButton}
+            >
+              Back to Login
             </Button>
           </Modal>
         </Portal>
@@ -635,5 +730,14 @@ const styles = StyleSheet.create({
   },
   joinClubFab: {
     marginTop: 16,
+  },
+  forgotPasswordButton: {
+    marginTop: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+    textAlign: 'center',
   },
 }); 
