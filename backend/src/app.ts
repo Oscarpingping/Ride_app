@@ -4,6 +4,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import rideRoutes from './routes/rides';
+import webRoutes from './routes/web';
+import { SYSTEM_CONFIG } from './config/system';
 
 // 加载环境变量
 dotenv.config();
@@ -22,6 +24,7 @@ app.use(express.json());
 // 路由
 app.use('/api/auth', authRoutes);
 app.use('/api/rides', rideRoutes);
+app.use('/', webRoutes);
 
 // 错误处理中间件
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -32,7 +35,8 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   });
 });
 
-const PORT = process.env.PORT || 5000;
+// 使用系统配置中的API端口
+const PORT = SYSTEM_CONFIG.SERVER.API_PORT;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`API Server is running on port ${PORT}`);
 }); 

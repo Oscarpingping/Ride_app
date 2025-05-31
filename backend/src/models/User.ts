@@ -23,11 +23,14 @@ export interface IUser extends Document {
   canCreateClub: boolean;
   createdAt: Date;
   updatedAt: Date;
-  profilePicture?: string; // 兼容字段，实际使用avatar
+  profilePicture?: string;
   emergencyContact?: EmergencyContact;
+  // 密码重置相关字段
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
-  toJSON(): UserType; // 转换为前端类型的方法
-  updateClubCreationPermission(): Promise<void>; // 新增：更新俱乐部创建权限的方法
+  toJSON(): UserType;
+  updateClubCreationPermission(): Promise<void>;
   toPublicJSON(): UserType;
   toAuthJSON(): UserType;
 }
@@ -97,6 +100,15 @@ const userSchema = new Schema<IUser>(
     emergencyContact: {
       name: String,
       phone: String
+    },
+    // 密码重置相关字段
+    resetPasswordToken: {
+      type: String,
+      default: null
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: null
     }
   },
   {
