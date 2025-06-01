@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, Dimensions } from 'react-native';
 import { Text, Appbar, Surface, Button, Avatar, Chip, IconButton, Portal, Modal, TextInput } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import MapView, { Marker } from 'react-native-maps';
+import { WebMap as MapView, WebMarker as Marker } from '../../components/WebMap';
 import { format } from 'date-fns';
 import { PaceLevelRanges, PaceLevel } from '../../types/ride';
 import { useMessages } from '../context/MessageContext';
@@ -87,6 +87,15 @@ export default function RideDetailsScreen() {
   }
 
   const paceRange = PaceLevelRanges[ride.pace as PaceLevel];
+  if (!paceRange) {
+    console.error('Invalid pace level:', ride.pace, 'Available levels:', Object.keys(PaceLevelRanges));
+    return (
+      <View style={styles.container}>
+        <Text>Error: Invalid pace level "{ride.pace}"</Text>
+      </View>
+    );
+  }
+  
   const paceInMph = {
     min: Math.round(paceRange.minSpeed * 0.621371),
     max: Math.round(paceRange.maxSpeed * 0.621371)

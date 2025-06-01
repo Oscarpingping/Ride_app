@@ -10,7 +10,17 @@ interface RideCardProps {
 }
 
 export function RideCard({ ride, onPress }: RideCardProps) {
-  const { toggleSaveRide, isSaved } = useRides();
+  const { isRideSaved, addSavedRide, removeSavedRide } = useRides();
+  
+  const toggleSaveRide = (rideId: string) => {
+    if (isRideSaved(rideId)) {
+      removeSavedRide(rideId);
+    } else {
+      addSavedRide(rideId);
+    }
+  };
+  
+  const isSaved = (rideId: string) => isRideSaved(rideId);
   
   return (
     <Surface style={styles.rideCard} elevation={2}>
@@ -18,12 +28,12 @@ export function RideCard({ ride, onPress }: RideCardProps) {
         <View style={styles.rideHeaderText}>
           <Text variant="titleMedium" style={styles.rideTitle}>{ride.title}</Text>
           <Text variant="bodyMedium" style={styles.rideDate}>
-            {format(new Date(ride.startTime), 'EEE, MMM d • h:mm a')}
+            {format(new Date(ride.date), 'EEE, MMM d • h:mm a')}
           </Text>
         </View>
         <IconButton 
-          icon={isSaved(ride.id) ? "bookmark" : "bookmark-outline"} 
-          onPress={() => toggleSaveRide(ride.id)} 
+          icon={isSaved(ride._id) ? "bookmark" : "bookmark-outline"} 
+          onPress={() => toggleSaveRide(ride._id)} 
         />
       </View>
 
@@ -40,10 +50,10 @@ export function RideCard({ ride, onPress }: RideCardProps) {
 
       <View style={styles.rideFooter}>
         <View style={styles.organizer}>
-          <Avatar.Text size={36} label={ride.organizer.name.split(' ').map(n => n[0]).join('')} />
+          <Avatar.Text size={36} label={ride.creator.name.split(' ').map(n => n[0]).join('')} />
           <View style={styles.organizerInfo}>
-            <Text variant="bodyMedium">Organized by {ride.organizer.name}</Text>
-            <Text variant="bodySmall" style={styles.rating}>{ride.organizer.rating} ★</Text>
+            <Text variant="bodyMedium">Organized by {ride.creator.name}</Text>
+            <Text variant="bodySmall" style={styles.rating}>★ 4.8</Text>
           </View>
         </View>
         <Button 

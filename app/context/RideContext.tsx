@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import type { Ride } from '../../shared/types/ride';
+import { apiRequest, API_ENDPOINTS } from '../config/api';
 
 interface RideContextType {
   rides: Ride[];
@@ -36,23 +37,28 @@ export function RideProvider({ children }: { children: ReactNode }) {
   const getRides = useCallback(async () => {
     try {
       setLoading(true);
-      // TODO: Implement API call
+      setError(null);
+      const data = await apiRequest<Ride[]>(API_ENDPOINTS.RIDES);
+      setRides(data);
       setLoading(false);
     } catch (err) {
       setError('Failed to fetch rides');
       setLoading(false);
+      console.error('Error fetching rides:', err);
     }
   }, []);
 
   const getRide = useCallback(async (id: string) => {
     try {
       setLoading(true);
-      // TODO: Implement API call
+      setError(null);
+      const data = await apiRequest<Ride>(`${API_ENDPOINTS.RIDES}/${id}`);
       setLoading(false);
-      return null;
+      return data;
     } catch (err) {
       setError('Failed to fetch ride');
       setLoading(false);
+      console.error('Error fetching ride:', err);
       return null;
     }
   }, []);
@@ -60,11 +66,17 @@ export function RideProvider({ children }: { children: ReactNode }) {
   const createRide = useCallback(async (ride: Omit<Ride, '_id'>) => {
     try {
       setLoading(true);
-      // TODO: Implement API call
+      setError(null);
+      const newRide = await apiRequest<Ride>(API_ENDPOINTS.RIDES, {
+        method: 'POST',
+        body: JSON.stringify(ride),
+      });
+      setRides(prev => [...prev, newRide]);
       setLoading(false);
     } catch (err) {
       setError('Failed to create ride');
       setLoading(false);
+      console.error('Error creating ride:', err);
     }
   }, []);
 

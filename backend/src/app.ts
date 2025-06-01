@@ -16,7 +16,12 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ride_app'
   .catch((error) => console.error('MongoDB connection error:', error));
 
 // 中间件
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // 路由
@@ -32,7 +37,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const PORT = parseInt(process.env.PORT || '12001');
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 }); 
