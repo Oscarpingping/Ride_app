@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import {
   Searchbar,
@@ -20,7 +20,7 @@ import {
 } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
-import MapView, { Marker } from 'react-native-maps';
+import { WebMap as MapView, WebMarker as Marker } from '../components/WebMap';
 import { Ride, TerrainType, PaceLevel, DifficultyLevel } from '../types/ride';
 import { FilterState, defaultFilterState } from '../app/types/filters';
 import { useRides } from './context/RideContext';
@@ -45,15 +45,39 @@ export default function HomeScreen() {
     { key: 'profile', title: 'Profile', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
   ]);
 
-  const { rides, toggleSaveRide, isSaved } = useRides();
+  const { 
+    rides, 
+    loading, 
+    error, 
+    getRides, 
+    isRideSaved, 
+    addSavedRide, 
+    removeSavedRide 
+  } = useRides();
 
-  const onRefresh = useCallback(() => {
+  // Load rides when component mounts
+  useEffect(() => {
+    getRides();
+  }, [getRides]);
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // TODO: Implement refresh logic
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
-  }, []);
+    await getRides();
+    setRefreshing(false);
+  }, [getRides]);
+
+  // Helper functions for saved rides
+  const toggleSaveRide = useCallback((rideId: string) => {
+    if (isRideSaved(rideId)) {
+      removeSavedRide(rideId);
+    } else {
+      addSavedRide(rideId);
+    }
+  }, [isRideSaved, addSavedRide, removeSavedRide]);
+
+  const isSaved = useCallback((rideId: string) => {
+    return isRideSaved(rideId);
+  }, [isRideSaved]);
 
   const filteredRides = useMemo(() => {
     return rides.filter(ride => {
@@ -94,7 +118,7 @@ export default function HomeScreen() {
 
       // Date range filter
       if (filters.dateRange.start && filters.dateRange.end) {
-        const rideDate = new Date(ride.startTime);
+        const rideDate = new Date(ride.date);
         if (rideDate < filters.dateRange.start || rideDate > filters.dateRange.end) {
           return false;
         }
@@ -106,8 +130,8 @@ export default function HomeScreen() {
       switch (filters.sortBy) {
         case 'date':
           return filters.sortOrder === 'asc'
-            ? a.startTime.getTime() - b.startTime.getTime()
-            : b.startTime.getTime() - a.startTime.getTime();
+            ? new Date(a.date).getTime() - new Date(b.date).getTime()
+            : new Date(b.date).getTime() - new Date(a.date).getTime();
         case 'distance':
           return filters.sortOrder === 'asc'
             ? a.route.distance - b.route.distance
@@ -124,9 +148,9 @@ export default function HomeScreen() {
 
   const renderRideCard = (ride: Ride) => (
     <RideCard
-      key={ride.id}
+      key={ride._id}
       ride={ride}
-      onPress={() => router.push(`/ride/${ride.id}`)}
+      onPress={() => router.push(`/ride/${ride._id}`)}
     />
   );
 

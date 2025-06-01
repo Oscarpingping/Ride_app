@@ -3,7 +3,8 @@ import { View, StyleSheet, ScrollView, Platform, Alert, KeyboardAvoidingView } f
 import { Button, TextInput, Text, Surface, SegmentedButtons, Chip, Portal, Modal } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import MapView, { Marker, MapPressEvent } from 'react-native-maps';
+import { WebMap as MapView, WebMarker as Marker } from '../components/WebMap';
+type MapPressEvent = { nativeEvent: { coordinate: { latitude: number; longitude: number } } };
 import { DifficultyLevel, TerrainType } from '../types/ride';
 
 async function geocodeAddress(address: string) {
