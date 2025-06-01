@@ -22,7 +22,13 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ride_app'
 
 // 中间件
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:19006', 'https://work-1-rjvnhjiglpundbbo.prod-runtime.all-hands.dev', 'https://work-2-rjvnhjiglpundbbo.prod-runtime.all-hands.dev'],
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:19006', 
+    'http://localhost:12000',
+    'https://work-1-arkmmtarepkvopxs.prod-runtime.all-hands.dev', 
+    'https://work-2-arkmmtarepkvopxs.prod-runtime.all-hands.dev'
+  ],
   credentials: true
 }));
 app.use(express.json());

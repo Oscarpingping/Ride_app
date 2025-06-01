@@ -38,6 +38,13 @@ export default function ProfileScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const [contacts, setContacts] = useState<User[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+  // 添加调试日志
+  const addDebugLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setDebugLogs(prev => [...prev.slice(-9), `${timestamp}: ${message}`]);
+  };
 
   useEffect(() => {
     // 给用户一些时间浏览页面，然后再显示登录提示
@@ -120,9 +127,20 @@ export default function ProfileScreen() {
       return;
     }
     setFormError(null);
-    await login(loginData);
-    if (!error) {
-      setShowLoginModal(false);
+    addDebugLog(`Starting login for: ${loginData.email}`);
+    try {
+      const result = await login(loginData);
+      addDebugLog(`Login completed. Success: ${result.success}, Error: ${result.error || 'none'}`);
+      if (result.success) {
+        setShowLoginModal(false);
+        addDebugLog('Login successful, modal closed');
+      } else {
+        addDebugLog(`Login failed: ${result.error}`);
+        setFormError(result.error || 'Login failed');
+      }
+    } catch (err) {
+      addDebugLog(`Login exception: ${err}`);
+      setFormError('An unexpected error occurred');
     }
   };
 
@@ -243,6 +261,17 @@ export default function ProfileScreen() {
               secureTextEntry
             />
             {(error || formError) && <Text style={styles.errorText}>{error || formError}</Text>}
+            
+            {/* Debug Panel */}
+            {debugLogs.length > 0 && (
+              <View style={styles.debugPanel}>
+                <Text style={styles.debugTitle}>Debug Logs:</Text>
+                {debugLogs.map((log, index) => (
+                  <Text key={index} style={styles.debugText}>{log}</Text>
+                ))}
+              </View>
+            )}
+            
             <Button mode="contained" onPress={handleLogin} style={styles.modalButton}>
               Login
             </Button>
@@ -792,5 +821,22 @@ const styles = StyleSheet.create({
   },
   backToLoginButton: {
     marginTop: 10,
+  },
+  debugPanel: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    marginVertical: 10,
+    borderRadius: 5,
+    maxHeight: 150,
+  },
+  debugTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  debugText: {
+    fontSize: 10,
+    color: '#333',
+    marginBottom: 2,
   },
 }); 
