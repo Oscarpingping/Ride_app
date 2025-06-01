@@ -1,12 +1,12 @@
 import { io, Socket } from 'socket.io-client';
-import { Message, SocketEvent, DirectChat, User } from '../types/socket';
+import { Message, DirectChat } from '../types/socket';
 import { API_BASE_URL, SOCKET_EVENTS } from '../config';
 
 export class SocketService {
   private static instance: SocketService;
   private socket: Socket;
   private messageQueue: Map<string, Message>;
-  private reconnectAttempts: number = 0;
+  // private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
   private currentUserId?: string;
   private onlineUsers: Set<string> = new Set();
@@ -34,7 +34,7 @@ export class SocketService {
   private setupListeners() {
     this.socket.on(SOCKET_EVENTS.CONNECT, () => {
       console.log('Connected to socket server');
-      this.reconnectAttempts = 0;
+      // this.reconnectAttempts = 0;
       this.syncMessageQueue();
     });
 
@@ -134,12 +134,12 @@ export class SocketService {
     this.socket.emit(event, data);
   }
 
-  private generateMessageId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
+  // private generateMessageId(): string {
+  //   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // }
 
   private async syncMessageQueue() {
-    for (const [id, message] of this.messageQueue) {
+    for (const [, message] of this.messageQueue) {
       if (message.status === 'SENDING') {
         this.socket.emit('message', message);
       }

@@ -47,7 +47,7 @@ export const register = async (req: Request, res: Response) => {
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
     const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: {
         token,
@@ -71,7 +71,7 @@ export const register = async (req: Request, res: Response) => {
     } as ApiResponse);
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Registration failed, please try again later',
     } as ApiResponse);
@@ -105,7 +105,7 @@ export const login = async (req: Request, res: Response) => {
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
     const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         token,
@@ -129,7 +129,7 @@ export const login = async (req: Request, res: Response) => {
     } as ApiResponse);
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Login failed, please try again later',
     } as ApiResponse);
@@ -162,14 +162,14 @@ export const refreshToken = async (req: Request, res: Response) => {
     // 生成新的访问令牌
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         token,
       },
     } as ApiResponse);
   } catch (error) {
-    res.status(401).json({
+    return res.status(401).json({
       success: false,
       error: 'Invalid refresh token',
     } as ApiResponse);
@@ -177,15 +177,15 @@ export const refreshToken = async (req: Request, res: Response) => {
 };
 
 // 用户登出控制器
-export const logout = async (req: Request, res: Response) => {
+export const logout = async (_req: Request, res: Response) => {
   try {
     // 在实际应用中，你可能需要将令牌加入黑名单
-    res.json({
+    return res.json({
       success: true,
       data: null,
     } as ApiResponse);
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Logout failed, please try again later',
     } as ApiResponse);
@@ -235,13 +235,13 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
       `
     });
 
-    res.json({
+    return res.json({
       success: true,
       message: 'If an account exists with this email, you will receive a password reset link',
     } as ApiResponse);
   } catch (error) {
     console.error('Password reset request error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to process password reset request',
     } as ApiResponse);
@@ -280,13 +280,13 @@ export const resetPassword = async (req: Request, res: Response) => {
       html: `<p>This is a confirmation that the password for your account ${user.email} has just been changed.</p>`
     });
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Password has been reset successfully',
     } as ApiResponse);
   } catch (error) {
     console.error('Password reset error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to reset password',
     } as ApiResponse);
@@ -313,7 +313,7 @@ export const resetPasswordWeb = async (req: Request, res: Response) => {
     }
 
     // 返回重置密码页面
-    res.send(`
+    return res.send(`
       <!DOCTYPE html>
       <html>
         <head>
@@ -378,6 +378,6 @@ export const resetPasswordWeb = async (req: Request, res: Response) => {
     `);
   } catch (error) {
     console.error('Password reset web error:', error);
-    res.status(500).send('An error occurred');
+    return res.status(500).send('An error occurred');
   }
 }; 

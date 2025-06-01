@@ -5,7 +5,7 @@ import type { User, UserState } from '../../shared/types/user-unified';
 import type { LoginRequest, RegisterRequest } from '../../shared/api/user';
 
 interface AuthContextType extends UserState {
-  login: (data: LoginRequest) => Promise<void>;
+  login: (data: LoginRequest) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
@@ -64,11 +64,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (data: LoginRequest) => {
+  const login = async (data: LoginRequest): Promise<{ success: boolean; error?: string }> => {
     try {
+      console.log('AuthContext: Starting login process');
       setState(prev => ({ ...prev, isLoading: true, error: null }));
+      console.log('AuthContext: Calling UserApi.login with data:', data);
       const response = await UserApi.login(data);
+      console.log('AuthContext: UserApi.login response:', response);
       if (response.success && response.data) {
+        console.log('AuthContext: Login successful, saving token');
         await AsyncStorage.setItem('token', response.data.token);
         setState({
           currentUser: response.data.user,
@@ -76,19 +80,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
           error: null,
         });
+        console.log('AuthContext: State updated successfully');
+        return { success: true };
       } else {
+        console.log('AuthContext: Login failed with response:', response);
+        const errorMsg = response.error || 'Login failed';
         setState(prev => ({
           ...prev,
           isLoading: false,
-          error: response.error || 'Login failed',
+          error: errorMsg,
         }));
+        return { success: false, error: errorMsg };
       }
     } catch (error) {
+      console.error('AuthContext: Login exception:', error);
+      const errorMsg = 'An error occurred during login';
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: 'An error occurred during login',
+        error: errorMsg,
       }));
+      return { success: false, error: errorMsg };
     }
   };
 

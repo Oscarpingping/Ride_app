@@ -22,7 +22,13 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ride_app'
 
 // 中间件
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:19006', 'https://work-1-rjvnhjiglpundbbo.prod-runtime.all-hands.dev', 'https://work-2-rjvnhjiglpundbbo.prod-runtime.all-hands.dev'],
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:19006', 
+    'http://localhost:12000',
+    'https://work-1-arkmmtarepkvopxs.prod-runtime.all-hands.dev', 
+    'https://work-2-arkmmtarepkvopxs.prod-runtime.all-hands.dev'
+  ],
   credentials: true
 }));
 app.use(express.json());
@@ -36,7 +42,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/', webRoutes);
 
 // 错误处理中间件
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err.stack);
   res.status(500).json({
     success: false,

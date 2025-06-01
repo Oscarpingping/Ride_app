@@ -1,6 +1,7 @@
 import express from 'express';
 import { userController } from '../controllers/userController';
 import { auth } from '../middleware/auth';
+import { AuthRequest } from '../types/auth';
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ router.get('/profile', auth, userController.getProfile);
 router.put('/profile', auth, userController.updateProfile);
 
 // 获取当前登录用户信息
-router.get('/me', auth, async (req, res) => {
+router.get('/me', auth, async (req: AuthRequest, res: express.Response) => {
   try {
     if (!req.user || !req.user._id) {
       return res.status(401).json({ 
@@ -31,13 +32,13 @@ router.get('/me', auth, async (req, res) => {
       });
     }
     
-    res.json({
+    return res.json({
       success: true,
       data: user.toJSON()
     });
   } catch (err) {
     console.error('Get current user error:', err);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false,
       error: '获取用户信息失败' 
     });
@@ -45,7 +46,7 @@ router.get('/me', auth, async (req, res) => {
 });
 
 // 更新当前用户信息
-router.patch('/me', auth, async (req, res) => {
+router.patch('/me', auth, async (req: AuthRequest, res: express.Response) => {
   try {
     if (!req.user || !req.user._id) {
       return res.status(401).json({ 
@@ -75,13 +76,13 @@ router.patch('/me', auth, async (req, res) => {
       });
     }
     
-    res.json({
+    return res.json({
       success: true,
       data: user.toJSON()
     });
   } catch (err) {
     console.error('Update user error:', err);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false,
       error: '更新用户信息失败' 
     });
@@ -89,8 +90,8 @@ router.patch('/me', auth, async (req, res) => {
 });
 
 // 用户登出（JWT场景，前端只需删除token，后端返回成功即可）
-router.post('/logout', auth, (req, res) => {
-  res.json({ 
+router.post('/logout', auth, (_req: AuthRequest, res: express.Response) => {
+  return res.json({ 
     success: true,
     message: '登出成功' 
   });

@@ -1,6 +1,7 @@
-import express, { Router, RequestHandler } from 'express';
-import { rideController, AuthRequest } from '../controllers/rideController';
+import { Router, RequestHandler } from 'express';
+import { rideController } from '../controllers/rideController';
 import { auth } from '../middleware/auth';
+import { AuthRequest } from '../types/auth';
 
 const router = Router();
 
@@ -29,7 +30,7 @@ router.post('/:id/join', rideController.joinRide as RequestHandler);
 router.post('/:id/leave', rideController.leaveRide as RequestHandler);
 
 // 获取当前用户发起的活动
-router.get('/created', async (req, res) => {
+router.get('/created', async (req: AuthRequest, res) => {
   console.log('req.user in /created:', req.user);
   if (!req.user || !req.user.userId) {
     return res.status(401).json({ message: '未认证用户' });
@@ -37,14 +38,14 @@ router.get('/created', async (req, res) => {
   try {
     const userId = req.user.userId;
     const rides = await require('../models/Ride').Ride.find({ organizer: userId });
-    res.json(Array.isArray(rides) ? rides : []);
+    return res.json(Array.isArray(rides) ? rides : []);
   } catch (err) {
-    res.status(500).json({ message: '获取发起活动失败' });
+    return res.status(500).json({ message: '获取发起活动失败' });
   }
 });
 
 // 获取当前用户参与的活动
-router.get('/participated', async (req, res) => {
+router.get('/participated', async (req: AuthRequest, res) => {
   console.log('req.user in /participated:', req.user);
   if (!req.user || !req.user.userId) {
     return res.status(401).json({ message: '未认证用户' });
@@ -52,9 +53,9 @@ router.get('/participated', async (req, res) => {
   try {
     const userId = req.user.userId;
     const rides = await require('../models/Ride').Ride.find({ participants: userId });
-    res.json(Array.isArray(rides) ? rides : []);
+    return res.json(Array.isArray(rides) ? rides : []);
   } catch (err) {
-    res.status(500).json({ message: '获取参与活动失败' });
+    return res.status(500).json({ message: '获取参与活动失败' });
   }
 });
 

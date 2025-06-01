@@ -9,7 +9,7 @@ export const getApiBaseUrl = (): string => {
   if (typeof window === 'undefined') {
     // 开发环境
     if (__DEV__) {
-      return 'http://localhost:5001';
+      return 'http://localhost:5002';
     }
     // 生产环境
     return 'https://your-production-api.com';
@@ -17,7 +17,11 @@ export const getApiBaseUrl = (): string => {
   
   // 在Web环境中
   if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:5001';
+    // 检查是否在部署环境中
+    if (typeof window !== 'undefined' && window.location.hostname.includes('prod-runtime.all-hands.dev')) {
+      return 'https://work-2-arkmmtarepkvopxs.prod-runtime.all-hands.dev';
+    }
+    return 'http://localhost:5002';
   }
   
   return 'https://your-production-api.com';
@@ -83,5 +87,10 @@ export const HTTP_CONFIG = {
 // 构建完整的API URL
 export const buildApiUrl = (endpoint: string): string => {
   const baseUrl = getApiBaseUrl();
-  return `${baseUrl}${endpoint}`;
+  const fullUrl = `${baseUrl}${endpoint}`;
+  console.log('API URL:', fullUrl);
+  console.log('Base URL:', baseUrl);
+  console.log('Endpoint:', endpoint);
+  console.log('Window location:', typeof window !== 'undefined' ? window.location.href : 'undefined');
+  return fullUrl;
 };

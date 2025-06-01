@@ -1,14 +1,7 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { User, IUser } from '../models/User';
-
-// 扩展 Request 类型
-interface AuthRequest extends Request {
-  user?: {
-    userId: string;
-    email: string;
-  };
-}
+import { User } from '../models/User';
+import { AuthRequest } from '../types/auth';
 
 export const userController = {
   // 注册新用户
@@ -38,7 +31,7 @@ export const userController = {
         { expiresIn: '7d' }
       );
 
-      res.status(201).json({
+      return res.status(201).json({
         token,
         user: {
           id: user._id,
@@ -47,7 +40,7 @@ export const userController = {
         }
       });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   },
 
@@ -75,7 +68,7 @@ export const userController = {
         { expiresIn: '7d' }
       );
 
-      res.json({
+      return res.json({
         token,
         user: {
           id: user._id,
@@ -84,7 +77,7 @@ export const userController = {
         }
       });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   },
 
@@ -95,13 +88,13 @@ export const userController = {
         return res.status(401).json({ message: 'Not authenticated' });
       }
 
-      const user = await User.findById(req.user.userId).select('-password');
+      const user = await User.findById(req.user._id || req.user.userId).select('-password');
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
-      res.json(user);
+      return res.json(user);
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   },
 
@@ -116,7 +109,7 @@ export const userController = {
       delete updates.password; // 不允许通过此接口更新密码
 
       const user = await User.findByIdAndUpdate(
-        req.user.userId,
+        req.user._id || req.user.userId,
         updates,
         { new: true }
       ).select('-password');
@@ -125,9 +118,9 @@ export const userController = {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      res.json(user);
+      return res.json(user);
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   }
 }; 

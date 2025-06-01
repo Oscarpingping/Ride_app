@@ -1,5 +1,3 @@
-import { User } from './user';
-
 export type ClubType = 'biking' | 'climbing' | 'hiking' | 'skiing' | 'surfing' | 'running' | 'camping';
 
 export interface ClubLocation {

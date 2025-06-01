@@ -43,9 +43,15 @@ const apiRequest = async (
     
     return await response.json();
   } catch (error) {
+    console.error('API Request Error:', error);
+    console.error('URL:', url);
+    console.error('Options:', options);
+    console.error('Retry count:', retryCount);
+    
     // 如果是网络错误且还有重试次数，则重试
     if (retryCount < HTTP_CONFIG.RETRY_ATTEMPTS && 
         (error instanceof TypeError || error.name === 'AbortError')) {
+      console.log('Retrying request...');
       await new Promise(resolve => setTimeout(resolve, HTTP_CONFIG.RETRY_DELAY));
       return apiRequest(url, options, retryCount + 1);
     }

@@ -44,9 +44,9 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
       userId: user._id.toString(), // 兼容旧代码
     };
 
-    next();
+    return next();
   } catch (error) {
-    res.status(401).json({
+    return res.status(401).json({
       success: false,
       error: '认证失败，请重新登录',
     });
