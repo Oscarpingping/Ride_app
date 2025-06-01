@@ -37,8 +37,13 @@ export default function ProfileScreen() {
   const [clubs, setClubs] = useState<Club[]>([]);
 
   useEffect(() => {
+    // 给用户一些时间浏览页面，然后再显示登录提示
     if (!isAuthenticated && !isLoading && !userDismissedModal) {
-      setShowLoginModal(true);
+      const timer = setTimeout(() => {
+        setShowLoginModal(true);
+      }, 2000); // 2秒后显示登录模态框
+      
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, isLoading, userDismissedModal]);
 

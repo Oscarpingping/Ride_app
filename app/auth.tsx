@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Linking } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, Surface, HelperText } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from './context/AuthContext';
+import { UserApi } from '../shared/api/user';
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -63,8 +64,35 @@ export default function AuthScreen() {
       setError('Please enter a valid email address');
       return;
     }
-    // TODO: 实现找回密码功能
-    Linking.openURL(`mailto:support@wildpals.com?subject=Password Recovery&body=My email is: ${email}`);
+    
+    try {
+      setIsLoading(true);
+      setError('');
+      
+      const response = await UserApi.requestPasswordReset({ email });
+      
+      if (response.success) {
+        Alert.alert(
+          'Password Reset Sent',
+          'If an account exists with this email, you will receive a password reset link shortly.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setIsForgotPassword(false);
+                setEmail('');
+              }
+            }
+          ]
+        );
+      } else {
+        setError(response.error || 'Failed to send password reset email');
+      }
+    } catch (err) {
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

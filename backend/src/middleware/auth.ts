@@ -11,6 +11,7 @@ declare global {
       user?: {
         _id: string;
         email: string;
+        userId?: string; // 兼容旧代码
       };
     }
   }
@@ -40,6 +41,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
     req.user = {
       _id: user._id.toString(),
       email: user.email,
+      userId: user._id.toString(), // 兼容旧代码
     };
 
     next();

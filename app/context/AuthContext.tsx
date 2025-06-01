@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserApi } from '../../shared/api/user';
-import type { User, UserState } from '../../shared/types/user';
+import type { User, UserState } from '../../shared/types/user-unified';
 import type { LoginRequest, RegisterRequest } from '../../shared/api/user';
 
 interface AuthContextType extends UserState {

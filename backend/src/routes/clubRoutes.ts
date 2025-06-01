@@ -1,12 +1,12 @@
 import express from 'express';
 import { createClub, getClubs, joinClub, getUserClubs } from '../controllers/clubController';
-import { authenticate } from '../middleware/auth';
+import { auth } from '../middleware/auth';
 
 const router = express.Router();
 
-router.post('/', authenticate, createClub);
-router.get('/', authenticate, getClubs);
-router.post('/:clubId/join', authenticate, joinClub);
-router.get('/user', authenticate, getUserClubs);
+router.post('/', auth, createClub);
+router.get('/', auth, getClubs);
+router.post('/:clubId/join', auth, joinClub);
+router.get('/user', auth, getUserClubs);
 
 export default router; 

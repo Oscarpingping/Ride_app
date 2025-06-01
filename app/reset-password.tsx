@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, Surface, HelperText } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { userApi } from '../shared/api/user';
+import { UserApi } from '../shared/api/user';
 
 export default function ResetPasswordScreen() {
   const [password, setPassword] = useState('');
@@ -31,8 +31,25 @@ export default function ResetPasswordScreen() {
         return;
       }
 
-      await userApi.resetPassword({ token: token as string, password });
-      router.replace('/auth');
+      const response = await UserApi.resetPassword({ 
+        token: token as string, 
+        password 
+      });
+      
+      if (response.success) {
+        Alert.alert(
+          'Password Reset Successful',
+          'Your password has been reset successfully. Please login with your new password.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/auth')
+            }
+          ]
+        );
+      } else {
+        setError(response.error || 'Failed to reset password');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reset password');
     } finally {

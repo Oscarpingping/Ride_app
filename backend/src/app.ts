@@ -4,6 +4,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import rideRoutes from './routes/rides';
+import userRoutes from './routes/userRoutes';
+import clubRoutes from './routes/clubRoutes';
+import messageRoutes from './routes/messageRoutes';
 import webRoutes from './routes/web';
 import { SYSTEM_CONFIG } from './config/system';
 
@@ -18,12 +21,18 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ride_app'
   .catch((error) => console.error('MongoDB connection error:', error));
 
 // 中间件
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:19006', 'https://work-1-rjvnhjiglpundbbo.prod-runtime.all-hands.dev', 'https://work-2-rjvnhjiglpundbbo.prod-runtime.all-hands.dev'],
+  credentials: true
+}));
 app.use(express.json());
 
 // 路由
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/rides', rideRoutes);
+app.use('/api/clubs', clubRoutes);
+app.use('/api/messages', messageRoutes);
 app.use('/', webRoutes);
 
 // 错误处理中间件
