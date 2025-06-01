@@ -3,7 +3,7 @@ import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } f
 import { Text, TextInput, Button, Surface, HelperText } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from './context/AuthContext';
-import { UserApi } from '../shared/api/user';
+import { AuthApi } from '../shared/api/auth';
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,6 +25,11 @@ export default function AuthScreen() {
   };
 
   const handleSubmit = async () => {
+    // 如果是忘记密码模式，不执行登录/注册逻辑
+    if (isForgotPassword) {
+      return;
+    }
+
     try {
       setError('');
       setIsLoading(true);
@@ -69,7 +74,7 @@ export default function AuthScreen() {
       setIsLoading(true);
       setError('');
       
-      const response = await UserApi.requestPasswordReset({ email });
+      const response = await AuthApi.requestPasswordReset({ email });
       
       if (response.success) {
         Alert.alert(
@@ -103,7 +108,7 @@ export default function AuthScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Surface style={styles.surface}>
           <Text variant="headlineMedium" style={styles.title}>
-            {isLogin ? 'Welcome Back' : 'Create Account'}
+            {isForgotPassword ? 'Reset Password' : (isLogin ? 'Welcome Back' : 'Create Account')}
           </Text>
           
           {!isLogin && (
@@ -143,15 +148,17 @@ export default function AuthScreen() {
           
           {error ? <HelperText type="error" visible={true}>{error}</HelperText> : null}
           
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            style={styles.button}
-            loading={isLoading}
-            disabled={isLoading}
-          >
-            {isLogin ? 'Sign In' : 'Sign Up'}
-          </Button>
+          {!isForgotPassword && (
+            <Button
+              mode="contained"
+              onPress={handleSubmit}
+              style={styles.button}
+              loading={isLoading}
+              disabled={isLoading}
+            >
+              {isLogin ? 'Sign In' : 'Sign Up'}
+            </Button>
+          )}
 
           {isLogin && (
             <View style={styles.actionsContainer}>

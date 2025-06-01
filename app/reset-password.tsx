@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, Surface, HelperText } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { UserApi } from '../shared/api/user';
+import { AuthApi } from '../shared/api/auth';
 
 export default function ResetPasswordScreen() {
   const [password, setPassword] = useState('');
@@ -31,7 +31,7 @@ export default function ResetPasswordScreen() {
         return;
       }
 
-      const response = await UserApi.resetPassword({ 
+      const response = await AuthApi.resetPassword({ 
         token: token as string, 
         password 
       });
@@ -43,7 +43,7 @@ export default function ResetPasswordScreen() {
           [
             {
               text: 'OK',
-              onPress: () => router.replace('/auth')
+              onPress: () => router.replace('/profile')
             }
           ]
         );

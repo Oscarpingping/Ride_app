@@ -1,9 +1,14 @@
 import { Request, Response } from 'express';
 import { Club } from '../models/Club';
 import { User } from '../models/User';
+import { AuthRequest } from '../types/auth';
 
-export const createClub = async (req: Request, res: Response) => {
+export const createClub = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
     const { name, description, type, location, rules, tags, isPrivate } = req.body;
     const founderId = req.user._id;
 
@@ -31,32 +36,36 @@ export const createClub = async (req: Request, res: Response) => {
       }
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: club
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('创建俱乐部失败:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: '创建俱乐部失败'
     });
   }
 };
 
-export const getClubs = async (req: Request, res: Response) => {
+export const getClubs = async (_req: Request, res: Response) => {
   try {
     const clubs = await Club.find()
       .populate('creatorId', 'name email')
       .populate('members', 'name email');
-    res.json(clubs);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.json(clubs);
+  } catch (error: any) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
-export const joinClub = async (req: Request, res: Response) => {
+export const joinClub = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
     const { clubId } = req.params;
     const userId = req.user._id;
 
@@ -65,21 +74,25 @@ export const joinClub = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Club not found' });
     }
 
-    if (club.members.includes(userId)) {
+    if (club.members.includes(userId as any)) {
       return res.status(400).json({ message: 'Already a member of this club' });
     }
 
-    club.members.push(userId);
+    club.members.push(userId as any);
     await club.save();
 
-    res.json(club);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.json(club);
+  } catch (error: any) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
-export const getUserClubs = async (req: Request, res: Response) => {
+export const getUserClubs = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
     const userId = req.user._id;
     const clubs = await Club.find({
       $or: [
@@ -90,8 +103,8 @@ export const getUserClubs = async (req: Request, res: Response) => {
     .populate('creatorId', 'name email')
     .populate('members', 'name email');
     
-    res.json(clubs);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.json(clubs);
+  } catch (error: any) {
+    return res.status(500).json({ message: error.message });
   }
 }; 

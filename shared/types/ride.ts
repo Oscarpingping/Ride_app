@@ -1,6 +1,6 @@
 import { User } from './user';
 
-export type TerrainType = 'Road' | 'Mountain' | 'Gravel' | 'Urban';
+export type TerrainType = 'Road' | 'Mountain' | 'Gravel' | 'MTB' | 'Urban' | 'Mixed';
 export type PaceLevel = 'Casual' | 'Moderate' | 'Fast';
 export type DifficultyLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 export type GenderPreference = 'All' | 'Male' | 'Female';
@@ -28,10 +28,12 @@ export interface Ride {
   title: string;
   description: string;
   date: string;
+  startTime: string;
   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   creatorId: string;
   creator: User;
   participants: RideParticipant[];
+  maxParticipants: number;
   route: {
     distance: number;
     elevationGain: number;

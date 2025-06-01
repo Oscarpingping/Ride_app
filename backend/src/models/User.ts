@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { CLUB_CREATION_PERMISSION } from '../config/constants';
 
 // 导入统一的类型定义
-import { User as UserType, ClubReference, EmergencyContact } from '../../../shared/types/user-unified';
+import { User as UserType, EmergencyContact } from '../../../shared/types/user-unified';
 
 // 后端用户接口，继承统一定义并添加Document和方法
 export interface IUser extends Document {
@@ -130,9 +130,9 @@ userSchema.pre('save', async function (next) {
 });
 
 // 评分更新中间件 - 当评分更新时自动更新俱乐部创建权限
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', function (next) {
   if (this.isModified('rating')) {
-    await this.updateClubCreationPermission();
+    this.updateClubCreationPermission();
   }
   next();
 });
@@ -143,7 +143,7 @@ userSchema.methods.comparePassword = async function (candidatePassword: string):
 };
 
 // 更新俱乐部创建权限的方法
-userSchema.methods.updateClubCreationPermission = async function(): Promise<void> {
+userSchema.methods.updateClubCreationPermission = function(): void {
   const rating = this.rating || 0;
   const ridesJoined = this.ridesJoined || 0;
   const ridesCreated = this.ridesCreated || 0;
@@ -162,11 +162,6 @@ userSchema.methods.updateClubCreationPermission = async function(): Promise<void
 
   // 使用配置的阈值更新权限
   this.canCreateClub = score >= CLUB_CREATION_PERMISSION.THRESHOLD;
-  
-  // 如果权限发生变化，保存用户
-  if (this.isModified('canCreateClub')) {
-    await this.save();
-  }
 };
 
 // 转换为前端类型的方法

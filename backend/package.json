@@ -2,9 +2,9 @@
   "name": "wildpals-backend",
   "version": "1.0.0",
   "description": "Backend for WildPals cycling app",
-  "main": "dist/app.js",
+  "main": "dist/backend/src/app.js",
   "scripts": {
-    "start": "node dist/app.js",
+    "start": "node dist/backend/src/app.js",
     "dev": "nodemon src/app.ts",
     "build": "tsc",
     "test": "jest"

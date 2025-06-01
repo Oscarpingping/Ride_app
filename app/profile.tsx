@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 import { useRides } from './context/RideContext';
 import { ClubApi } from '../shared/api/club';
 import { ContactApi } from '../shared/api/contact';
+import { AuthApi } from '../shared/api/auth';
 import type { User } from '../shared/types/user';
 import type { Ride } from '../shared/types/ride';
 import type { Club } from '../shared/types/club';
@@ -15,6 +16,7 @@ export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState('activities');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showCreateClubModal, setShowCreateClubModal] = useState(false);
   const [showJoinClubModal, setShowJoinClubModal] = useState(false);
@@ -26,6 +28,7 @@ export default function ProfileScreen() {
     password: '',
     confirmPassword: '',
   });
+  const [resetEmail, setResetEmail] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [clubData, setClubData] = useState({
     name: '',
@@ -143,6 +146,35 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!resetEmail) {
+      setFormError('Please enter your email address');
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      setFormError('Please enter a valid email address');
+      return;
+    }
+    
+    setFormError(null);
+    try {
+      const response = await AuthApi.requestPasswordReset({ email: resetEmail });
+      if (response.success) {
+        setShowForgotPasswordModal(false);
+        setResetEmail('');
+        // 显示成功消息
+        setFormError(null);
+        alert('If an account exists with this email, you will receive a password reset link shortly.');
+      } else {
+        setFormError(response.error || 'Failed to send password reset email');
+      }
+    } catch (err) {
+      setFormError('Network error. Please check your connection and try again.');
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -214,6 +246,16 @@ export default function ProfileScreen() {
             <Button mode="contained" onPress={handleLogin} style={styles.modalButton}>
               Login
             </Button>
+            <Button 
+              mode="text" 
+              onPress={() => {
+                setShowLoginModal(false);
+                setShowForgotPasswordModal(true);
+              }}
+              style={styles.forgotPasswordButton}
+            >
+              Forgot Password?
+            </Button>
           </Modal>
 
           <Modal
@@ -268,6 +310,58 @@ export default function ProfileScreen() {
             {(error || formError) && <Text style={styles.errorText}>{error || formError}</Text>}
             <Button mode="contained" onPress={handleRegister} style={styles.modalButton}>
               Register
+            </Button>
+          </Modal>
+
+          <Modal
+            visible={showForgotPasswordModal}
+            onDismiss={() => {
+              setShowForgotPasswordModal(false);
+              setResetEmail('');
+              setFormError(null);
+            }}
+            contentContainerStyle={styles.modalContainer}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Reset Password</Text>
+              <Button 
+                mode="text" 
+                onPress={() => {
+                  setShowForgotPasswordModal(false);
+                  setResetEmail('');
+                  setFormError(null);
+                }}
+                style={styles.closeButton}
+              >
+                ✕
+              </Button>
+            </View>
+            <Text style={styles.resetDescription}>
+              Enter your email address and we'll send you a link to reset your password.
+            </Text>
+            <TextInput
+              label="Email"
+              value={resetEmail}
+              onChangeText={setResetEmail}
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            {formError && <Text style={styles.errorText}>{formError}</Text>}
+            <Button mode="contained" onPress={handleForgotPassword} style={styles.modalButton}>
+              Send Reset Link
+            </Button>
+            <Button 
+              mode="text" 
+              onPress={() => {
+                setShowForgotPasswordModal(false);
+                setShowLoginModal(true);
+                setResetEmail('');
+                setFormError(null);
+              }}
+              style={styles.backToLoginButton}
+            >
+              Back to Login
             </Button>
           </Modal>
         </Portal>
@@ -686,5 +780,17 @@ const styles = StyleSheet.create({
   },
   joinClubFab: {
     marginTop: 16,
+  },
+  forgotPasswordButton: {
+    marginTop: 10,
+  },
+  resetDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  backToLoginButton: {
+    marginTop: 10,
   },
 }); 

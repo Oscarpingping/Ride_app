@@ -1,13 +1,6 @@
 import { Request, Response } from 'express';
 import { Message } from '../models/Message';
-
-// 扩展 Request 类型
-interface AuthRequest extends Request {
-  user?: {
-    userId: string;
-    email: string;
-  };
-}
+import { AuthRequest } from '../types/auth';
 
 export const messageController = {
   // 获取用户的所有消息
@@ -19,17 +12,17 @@ export const messageController = {
 
       const messages = await Message.find({
         $or: [
-          { senderId: req.user.userId },
-          { receiverId: req.user.userId }
+          { senderId: req.user._id },
+          { receiverId: req.user._id }
         ]
       })
       .populate('senderId', 'name email')
       .populate('receiverId', 'name email')
       .sort({ timestamp: -1 });
 
-      res.json(messages);
+      return res.json(messages);
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   },
 
@@ -41,9 +34,9 @@ export const messageController = {
         .populate('receiverId', 'name email')
         .sort({ timestamp: -1 });
 
-      res.json(messages);
+      return res.json(messages);
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   },
 
@@ -56,7 +49,7 @@ export const messageController = {
 
       const messageData = {
         ...req.body,
-        senderId: req.user.userId,
+        senderId: req.user._id,
         timestamp: new Date()
       };
 
@@ -67,9 +60,9 @@ export const messageController = {
         .populate('senderId', 'name email')
         .populate('receiverId', 'name email');
 
-      res.status(201).json(populatedMessage);
+      return res.status(201).json(populatedMessage);
     } catch (error: any) {
-      res.status(400).json({ message: error.message });
+      return res.status(400).json({ message: error.message });
     }
   },
 
@@ -87,14 +80,14 @@ export const messageController = {
       }
 
       // 检查是否是发送者
-      if (message.senderId.toString() !== req.user.userId) {
+      if (message.senderId.toString() !== req.user._id) {
         return res.status(403).json({ message: 'Not authorized' });
       }
 
       await message.deleteOne();
-      res.json({ message: 'Message deleted successfully' });
+      return res.json({ message: 'Message deleted successfully' });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   },
 
@@ -107,8 +100,8 @@ export const messageController = {
 
       const messages = await Message.find({
         $or: [
-          { senderId: req.user.userId },
-          { receiverId: req.user.userId }
+          { senderId: req.user._id },
+          { receiverId: req.user._id }
         ]
       })
       .populate('senderId', 'name email')
@@ -121,7 +114,7 @@ export const messageController = {
           return acc;
         }
 
-        const otherUserId = message.senderId._id.toString() === req.user.userId
+        const otherUserId = message.senderId._id.toString() === req.user._id
           ? message.receiverId._id.toString()
           : message.senderId._id.toString();
 
@@ -130,7 +123,7 @@ export const messageController = {
           existingThread.messages.push(message);
         } else {
           const user = {
-            user: message.senderId._id.toString() === req.user.userId
+            user: message.senderId._id.toString() === req.user._id
               ? message.receiverId
               : message.senderId
           };
@@ -143,9 +136,9 @@ export const messageController = {
         return acc;
       }, []);
 
-      res.json(threads);
+      return res.json(threads);
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   }
 }; 

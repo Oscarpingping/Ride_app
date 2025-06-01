@@ -1,15 +1,8 @@
 import { Request, Response } from 'express';
 import { Ride } from '../models/Ride';
-import { User } from '../models/User';
+// import { User } from '../models/User';
 import { ApiResponse } from '../../../shared/api/types';
-
-// 导出 AuthRequest 接口
-export interface AuthRequest extends Request {
-  user?: {
-    _id: string;
-    email: string;
-  };
-}
+import { AuthRequest } from '../types/auth';
 
 export const createRide = async (req: AuthRequest, res: Response) => {
   try {
@@ -51,31 +44,31 @@ export const createRide = async (req: AuthRequest, res: Response) => {
 
     await ride.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: ride,
     } as ApiResponse);
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: '创建活动失败，请稍后重试',
     } as ApiResponse);
   }
 };
 
-export const getRides = async (req: Request, res: Response) => {
+export const getRides = async (_req: Request, res: Response) => {
   try {
     const rides = await Ride.find({ isPrivate: false })
       .populate('organizer', 'name avatar')
       .populate('participants', 'name avatar')
       .sort({ startTime: 1 });
 
-    res.json({
+    return res.json({
       success: true,
       data: rides,
     } as ApiResponse);
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: '获取活动列表失败，请稍后重试',
     } as ApiResponse);
@@ -103,12 +96,12 @@ export const getRide = async (req: AuthRequest, res: Response) => {
       } as ApiResponse);
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: ride,
     } as ApiResponse);
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: '获取活动详情失败，请稍后重试',
     } as ApiResponse);
@@ -149,12 +142,12 @@ export const updateRide = async (req: AuthRequest, res: Response) => {
       .populate('organizer', 'name avatar')
       .populate('participants', 'name avatar');
 
-    res.json({
+    return res.json({
       success: true,
       data: updatedRide,
     } as ApiResponse);
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: '更新活动失败，请稍后重试',
     } as ApiResponse);
@@ -189,12 +182,12 @@ export const deleteRide = async (req: AuthRequest, res: Response) => {
 
     await ride.deleteOne();
 
-    res.json({
+    return res.json({
       success: true,
       data: null,
     } as ApiResponse);
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: '删除活动失败，请稍后重试',
     } as ApiResponse);
@@ -239,12 +232,12 @@ export const joinRide = async (req: AuthRequest, res: Response) => {
     ride.currentParticipants += 1;
     await ride.save();
 
-    res.json({
+    return res.json({
       success: true,
       data: ride,
     } as ApiResponse);
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: '参加活动失败，请稍后重试',
     } as ApiResponse);
@@ -293,14 +286,25 @@ export const leaveRide = async (req: AuthRequest, res: Response) => {
     ride.currentParticipants -= 1;
     await ride.save();
 
-    res.json({
+    return res.json({
       success: true,
       data: ride,
     } as ApiResponse);
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: '退出活动失败，请稍后重试',
     } as ApiResponse);
   }
+};
+
+// 导出控制器对象
+export const rideController = {
+  getAllRides: getRides,
+  createRide,
+  getRide,
+  updateRide,
+  deleteRide,
+  joinRide,
+  leaveRide,
 }; 
