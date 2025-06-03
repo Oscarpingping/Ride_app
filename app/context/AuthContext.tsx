@@ -67,15 +67,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (data: LoginRequest): Promise<{ success: boolean; error?: string }> => {
     try {
       console.log('AuthContext: Starting login process');
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
-      console.log('AuthContext: Calling UserApi.login with data:', data);
+      setState(prev => ({ ...prev, isLoading: true, error: null, currentUser: prev.currentUser ?? null }));
+      
       const response = await UserApi.login(data);
-      console.log('AuthContext: UserApi.login response:', response);
-      if (response.success && response.data) {
+      console.log('AuthContext: UserApi.login response:', {
+        success: response.success,
+        error: response.error,
+        hasData: !!response.data
+      });
+
+      if (response.success && response.data?.user) {
         console.log('AuthContext: Login successful, saving token');
         await AsyncStorage.setItem('token', response.data.token);
+        const user = response.data.user ?? null;
         setState({
-          currentUser: response.data.user,
+          currentUser: user,
           isAuthenticated: true,
           isLoading: false,
           error: null,
@@ -84,29 +90,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       } else {
         console.log('AuthContext: Login failed with response:', response);
-        const errorMsg = response.error || 'Login failed';
-        setState(prev => ({
-          ...prev,
+        const errorMsg = response.error || '登录失败，请检查邮箱和密码';
+        setState({
+          currentUser: null,
+          isAuthenticated: false,
           isLoading: false,
           error: errorMsg,
-        }));
+        });
         return { success: false, error: errorMsg };
       }
     } catch (error) {
       console.error('AuthContext: Login exception:', error);
-      const errorMsg = 'An error occurred during login';
-      setState(prev => ({
-        ...prev,
+      const errorMsg = '登录过程中发生错误，请稍后重试';
+      setState({
+        currentUser: null,
+        isAuthenticated: false,
         isLoading: false,
         error: errorMsg,
-      }));
+      });
       return { success: false, error: errorMsg };
     }
   };
 
   const register = async (data: RegisterRequest) => {
     try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      setState(prev => ({ ...prev, isLoading: true, error: null, currentUser: prev.currentUser ?? null }));
       const response = await UserApi.register(data);
       if (response.success && response.data) {
         await AsyncStorage.setItem('token', response.data.token);
@@ -121,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ...prev,
           isLoading: false,
           error: response.error || 'Registration failed',
+          currentUser: prev.currentUser ?? null,
         }));
       }
     } catch (error) {
@@ -128,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...prev,
         isLoading: false,
         error: 'An error occurred during registration',
+        currentUser: prev.currentUser ?? null,
       }));
     }
   };
@@ -145,13 +155,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState(prev => ({
         ...prev,
         error: 'Failed to logout',
+        currentUser: prev.currentUser ?? null,
       }));
     }
   };
 
   const updateProfile = async (data: Partial<User>) => {
     try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      setState(prev => ({ ...prev, isLoading: true, error: null, currentUser: prev.currentUser ?? null }));
       const response = await UserApi.updateUser(data);
       if (response.success && response.data) {
         setState(prev => ({
@@ -165,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ...prev,
           isLoading: false,
           error: response.error || 'Failed to update profile',
+          currentUser: prev.currentUser ?? null,
         }));
       }
     } catch (error) {
@@ -172,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...prev,
         isLoading: false,
         error: 'An error occurred while updating profile',
+        currentUser: prev.currentUser ?? null,
       }));
     }
   };

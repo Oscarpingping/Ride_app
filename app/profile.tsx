@@ -72,7 +72,7 @@ export default function ProfileScreen() {
   };
 
   const fetchClubs = async () => {
-    const response = await ClubApi.getUserClubs();
+    const response = await ClubApi.getClubs();
     if (response.success && response.data) {
       setClubs(response.data);
     }

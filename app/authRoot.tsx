@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, Surface, HelperText } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from './context/AuthContext';
 import { AuthApi } from '../shared/api/auth';
 
@@ -10,18 +10,23 @@ export default function AuthScreen() {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { login, register } = useAuth();
+
+  useEffect(() => {
+    // 检查 URL 参数，设置登录/注册状态
+    if (params.register === '1') {
+      setIsLogin(false);
+    }
+  }, [params]);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const validatePassword = (password: string) => {
-    return password.length >= 6;
   };
 
   const handleSubmit = async () => {
@@ -40,8 +45,8 @@ export default function AuthScreen() {
       }
 
       if (isLogin) {
-        if (!validatePassword(password)) {
-          setError('Password must be at least 6 characters');
+        if (!password) {
+          setError('Please enter your password');
           return;
         }
         await login({ email, password });
@@ -50,13 +55,17 @@ export default function AuthScreen() {
           setError('Please enter your name');
           return;
         }
-        if (!validatePassword(password)) {
-          setError('Password must be at least 6 characters');
+        if (!password) {
+          setError('Please enter a password');
+          return;
+        }
+        if (password !== confirmPassword) {
+          setError('Passwords do not match');
           return;
         }
         await register({ email, password, name });
       }
-      router.replace('/');
+      router.replace('/(tabs)/home');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Operation failed, please try again');
     } finally {
@@ -135,15 +144,28 @@ export default function AuthScreen() {
           />
           
           {!isForgotPassword && (
-            <TextInput
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              style={styles.input}
-              mode="outlined"
-              secureTextEntry
-              disabled={isLoading}
-            />
+            <View>
+              <TextInput
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                style={styles.input}
+                mode="outlined"
+                secureTextEntry
+                disabled={isLoading}
+              />
+              {!isLogin && (
+                <TextInput
+                  label="Confirm Password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  style={styles.input}
+                  mode="outlined"
+                  secureTextEntry
+                  disabled={isLoading}
+                />
+              )}
+            </View>
           )}
           
           {error ? <HelperText type="error" visible={true}>{error}</HelperText> : null}

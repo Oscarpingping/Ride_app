@@ -5,11 +5,17 @@
 
 // 获取API基础URL
 export const getApiBaseUrl = (): string => {
+  // 优先使用环境变量中的配置
+  const envApiUrl = process.env.API_BASE_URL;
+  if (envApiUrl) {
+    return envApiUrl;
+  }
+
   // 在React Native环境中
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' || !window.location) {
     // 开发环境
     if (__DEV__) {
-      return 'http://localhost:5002';
+      return 'http://localhost:5001';
     }
     // 生产环境
     return 'https://your-production-api.com';
@@ -17,11 +23,7 @@ export const getApiBaseUrl = (): string => {
   
   // 在Web环境中
   if (process.env.NODE_ENV === 'development') {
-    // 检查是否在部署环境中
-    if (typeof window !== 'undefined' && window.location.hostname.includes('prod-runtime.all-hands.dev')) {
-      return 'https://work-2-arkmmtarepkvopxs.prod-runtime.all-hands.dev';
-    }
-    return 'http://localhost:5002';
+    return 'http://localhost:5001';
   }
   
   return 'https://your-production-api.com';
@@ -88,9 +90,15 @@ export const HTTP_CONFIG = {
 export const buildApiUrl = (endpoint: string): string => {
   const baseUrl = getApiBaseUrl();
   const fullUrl = `${baseUrl}${endpoint}`;
-  console.log('API URL:', fullUrl);
-  console.log('Base URL:', baseUrl);
-  console.log('Endpoint:', endpoint);
-  console.log('Window location:', typeof window !== 'undefined' ? window.location.href : 'undefined');
+  
+  // 添加调试日志
+  console.log('🔍 API Request Details:', {
+    fullUrl,
+    baseUrl,
+    endpoint,
+    environment: __DEV__ ? 'development' : 'production',
+    platform: typeof window === 'undefined' ? 'react-native' : 'web'
+  });
+  
   return fullUrl;
 };

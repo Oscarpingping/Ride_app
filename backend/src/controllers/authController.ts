@@ -10,13 +10,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
 
 // 用户注册控制器
-export const register = async (req: Request, res: Response) => {
+export const register = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { name, email, password } = req.body;
+    console.log(`[${new Date().toISOString()}] 新用户注册请求: ${email}`);
 
     // 检查用户是否已存在
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      console.log(`[${new Date().toISOString()}] 注册失败: 邮箱 ${email} 已被注册`);
       return res.status(400).json({
         success: false,
         error: 'Email already registered. Please sign in or use a different email',
@@ -47,6 +49,7 @@ export const register = async (req: Request, res: Response) => {
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
     const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
+    console.log(`[${new Date().toISOString()}] 用户注册成功: ${email}`);
     return res.status(201).json({
       success: true,
       data: {
@@ -70,7 +73,7 @@ export const register = async (req: Request, res: Response) => {
       },
     } as ApiResponse);
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error(`[${new Date().toISOString()}] 注册失败:`, error);
     return res.status(500).json({
       success: false,
       error: 'Registration failed, please try again later',
@@ -79,13 +82,23 @@ export const register = async (req: Request, res: Response) => {
 };
 
 // 用户登录控制器
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<Response> => {
   try {
+    // 记录请求头信息
+    console.log(`[${new Date().toISOString()}] 🔍 登录请求详情:
+      Headers: ${JSON.stringify(req.headers, null, 2)}
+      Body: ${JSON.stringify(req.body, null, 2)}
+      URL: ${req.originalUrl}
+      Method: ${req.method}
+    `);
+
     const { email, password } = req.body;
+    console.log(`[${new Date().toISOString()}] 用户登录请求: ${email}`);
 
     // 查找用户
     const user = await User.findOne({ email });
     if (!user) {
+      console.log(`[${new Date().toISOString()}] 登录失败: 用户 ${email} 不存在`);
       return res.status(401).json({
         success: false,
         error: 'Invalid email or password',
@@ -95,6 +108,7 @@ export const login = async (req: Request, res: Response) => {
     // 验证密码
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log(`[${new Date().toISOString()}] 登录失败: 密码不匹配 ${email}`);
       return res.status(401).json({
         success: false,
         error: 'Invalid email or password',
@@ -105,7 +119,8 @@ export const login = async (req: Request, res: Response) => {
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
     const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
-    return res.json({
+    console.log(`[${new Date().toISOString()}] 用户登录成功: ${email}`);
+    return res.status(200).json({
       success: true,
       data: {
         token,
@@ -128,7 +143,13 @@ export const login = async (req: Request, res: Response) => {
       },
     } as ApiResponse);
   } catch (error) {
-    console.error('Login error:', error);
+    // 详细记录错误信息
+    console.error(`[${new Date().toISOString()}] 登录失败:`, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      requestBody: req.body,
+      headers: req.headers
+    });
     return res.status(500).json({
       success: false,
       error: 'Login failed, please try again later',
@@ -177,14 +198,15 @@ export const refreshToken = async (req: Request, res: Response) => {
 };
 
 // 用户登出控制器
-export const logout = async (_req: Request, res: Response) => {
+export const logout = async (_req: Request, res: Response): Promise<Response> => {
   try {
-    // 在实际应用中，你可能需要将令牌加入黑名单
-    return res.json({
+    console.log(`[${new Date().toISOString()}] 用户登出成功`);
+    return res.status(200).json({
       success: true,
       data: null,
     } as ApiResponse);
   } catch (error) {
+    console.error(`[${new Date().toISOString()}] 登出失败:`, error);
     return res.status(500).json({
       success: false,
       error: 'Logout failed, please try again later',

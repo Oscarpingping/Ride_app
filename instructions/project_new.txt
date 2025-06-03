@@ -17,75 +17,7 @@ g，主界面home左边的图标打开message页面，列出用户最近（按�
 打开其中的某个聊天，聊天页面从后端数据库调取最近的聊天记录。
 h，在创建私有活动时，活动创建者可以邀请他人参加，并选择新建聊天群，被邀请人进入聊天室，或利用现有自己管理的俱乐部聊天室。
 
+关于欢迎页面、登录、注册的要求：我们来重申一下用户登录过程：用户首次打开app会跳出welcome界面可选择login 或register，
+分别引导用户进入登录或注册页面。已登录用户打开app应通过logme机制自动登录用户，进入除非用户本地存储的登录状态token已失效，此时跳出用户登录页面。
 
 
-
-项目结构：
-项目设计采用前后端分离设计，前端app采用React Native + Expo；后端采用Node.js+Express+mongoDB。
-
-项目结构如下：
-
-```
-├── app/                    # 主要应用代码
-│   ├── components/        # 可复用组件
-│   ├── context/          # Context相关
-│   ├── hooks/            # 自定义Hooks
-│   ├── services/         # API服务
-│   ├── types/            # TypeScript类型定义
-│   ├── constants/        # 常量定义
-│   └── (tabs)/           # 标签页相关组件
-├── backend/              # 后端服务代码
-├── shared/              # 前后端共享代码
-├── assets/              # 静态资源
-└── scripts/             # 工具脚本
-
-其中，shared 目录的设计体现了现代前端工程化的最佳实践，是一个很好的参考示例。
-
-1，类型定义
-使用 TypeScript 接口和类型
-清晰的类型层次结构
-类型复用和组合
-2，API 设计
-RESTful 风格
-统一的端点管理
-类型安全的请求/响应
-3，工具函数
-纯函数设计
-单一职责
-可测试性
-4，配置管理
-环境变量管理
-类型安全的配置
-开发/生产环境分离
-
-设置share的目录这种设计方式确保了：
-代码的可维护性
-类型安全
-前后端一致性
-开发效率
-代码复用
-
-三、项目使用的技术栈
-前端技术栈：
-核心框架：
-React Native (0.76.9)
-Expo (52.0.46)
-TypeScript
-
-
-UI组件：
-React Native Paper (Material Design组件库)
-Expo Vector Icons
-React Native Maps (地图功能)
-React Native Reanimated (动画)
-功能模块：
-Expo Location (位置服务)
-React Native Gesture Handler (手势处理)
-AsyncStorage (本地存储)
-Google Sign-In (Google登录)
-后端技术栈：
-服务器：
-Express.js
-MongoDB (mongoose)
-JWT (身份验证)
-Firebase (可能用于实时功能)
