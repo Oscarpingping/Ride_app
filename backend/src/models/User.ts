@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { CLUB_CREATION_PERMISSION } from '../config/constants';
 
 // 导入统一的类型定义
-import { User as UserType, EmergencyContact } from '../../../shared/types/user-unified';
+import { User as UserType, EmergencyContact, UserPreferences } from '../../../shared/types/user-unified';
 
 // 后端用户接口，继承统一定义并添加Document和方法
 export interface IUser extends Document {
@@ -25,6 +25,7 @@ export interface IUser extends Document {
   updatedAt: Date;
   profilePicture?: string;
   emergencyContact?: EmergencyContact;
+  preferences?: UserPreferences;
   // 密码重置相关字段
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
@@ -100,6 +101,20 @@ const userSchema = new Schema<IUser>(
     emergencyContact: {
       name: String,
       phone: String
+    },
+    preferences: {
+      terrain: [{
+        type: String,
+        enum: ['Road', 'Mountain', 'Gravel', 'MTB', 'Urban', 'Mixed']
+      }],
+      pace: [{
+        type: String,
+        enum: ['Casual', 'Moderate', 'Fast']
+      }],
+      difficulty: [{
+        type: String,
+        enum: ['Beginner', 'Intermediate', 'Advanced']
+      }]
     },
     // 密码重置相关字段
     resetPasswordToken: {

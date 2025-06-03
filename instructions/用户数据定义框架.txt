@@ -1,0 +1,67 @@
+1. 后端模型定义（MongoDB Schema）
+位置：backend/src/models/
+User.ts: 定义 IUser 接口，继承自 Mongoose Document
+Ride.ts: 定义 IRide 接口，继承自 Mongoose Document
+Club.ts: 定义 IClub 接口，继承自 Mongoose Document
+用途：定义数据库模型和 Schema，用于 MongoDB 数据存储和操作。
+2. 共享类型定义（前后端共用）
+位置：shared/types/
+user-unified.ts: 统一的用户相关类型定义
+BaseUser: 基础用户属性
+User: 完整用户信息
+UserSummary: 用户摘要信息
+UserPublic: 公开用户信息
+SocketUser: WebSocket 用户信息
+AuthUser: 认证用户信息
+ride.ts: 行程相关类型定义
+club.ts: 俱乐部相关类型定义
+entities.ts: 实体类型定义
+common.ts: 通用类型定义
+用途：定义前后端共用的类型，确保类型一致性。
+3. API 类型定义
+位置：shared/api/
+types.ts: API 请求和响应类型
+CreateRideRequest
+UpdateRideRequest
+CreateClubRequest
+UpdateClubRequest
+user.ts: 用户 API 接口定义
+UserApiInterface
+用途：定义 API 接口的类型，用于前后端通信。
+4. 前端组件类型定义
+位置：app/components/
+RideCard.tsx: 行程卡片组件类型
+ClubCard.tsx: 俱乐部卡片组件类型
+用途：定义前端组件的 props 类型。
+5. 前端 Context 类型定义
+位置：app/context/
+AuthContext.tsx: 认证上下文类型
+RideContext.tsx: 行程上下文类型
+ClubContext.tsx: 俱乐部上下文类型
+用途：定义 React Context 的类型。
+6. 文档中的类型定义
+位置：docs/
+data-models.md: 数据模型文档
+type-migration-guide.md: 类型迁移指南
+用途：文档说明和类型迁移参考。
+建议优化：
+类型统一：
+建议将 shared/types/user-unified.ts 作为主要的用户类型定义文件
+其他文件中的用户类型应该引用这个统一类型
+删除重复的类型定义
+类型组织：
+将 API 相关类型统一放在 shared/api/types.ts
+将实体类型统一放在 shared/types/entities.ts
+将组件类型放在各自的组件文件中
+类型文档：
+在 docs/ 目录下维护最新的类型文档
+删除过时的类型文档
+类型迁移：
+完成类型迁移后，可以删除 type-migration-guide.md
+确保所有类型定义都使用新的统一类型
+这样的组织方式可以：
+减少类型定义的重复
+提高代码的可维护性
+确保类型的一致性
+方便类型的管理和更新
+

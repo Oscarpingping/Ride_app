@@ -33,7 +33,7 @@ export const SYSTEM_CONFIG = {
     // 主服务端口
     PORT: process.env.PORT || 3000,
     // API服务端口
-    API_PORT: process.env.API_PORT || 5002,
+    API_PORT: process.env.API_PORT || 5001,
     NODE_ENV: process.env.NODE_ENV || 'development'
   },
 

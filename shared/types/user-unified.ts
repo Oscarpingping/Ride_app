@@ -3,6 +3,22 @@
  * 这个文件包含所有用户相关的类型定义，确保前后端一致性
  */
 
+// 用户偏好相关类型定义
+export type TerrainType = 'Road' | 'Mountain' | 'Gravel' | 'MTB' | 'Urban' | 'Mixed';
+export type PaceLevel = 'Casual' | 'Moderate' | 'Fast';
+export type DifficultyLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+
+export interface UserPreferences {
+  terrain: TerrainType[];
+  pace: PaceLevel[];
+  difficulty: DifficultyLevel[];
+}
+
+// 用户偏好选项常量
+export const TERRAIN_OPTIONS: TerrainType[] = ['Road', 'Mountain', 'Gravel', 'MTB', 'Urban', 'Mixed'];
+export const PACE_OPTIONS: PaceLevel[] = ['Casual', 'Moderate', 'Fast'];
+export const DIFFICULTY_OPTIONS: DifficultyLevel[] = ['Beginner', 'Intermediate', 'Advanced'];
+
 // 基础用户信息（最小集合）
 export interface BaseUser {
   _id: string;
@@ -27,6 +43,7 @@ export interface User extends BaseUser {
   canCreateClub: boolean;       // 用户创建俱乐部的权限
   profilePicture?: string;      // 兼容旧字段名，实际使用avatar
   emergencyContact?: EmergencyContact;
+  preferences?: UserPreferences; // 用户骑行偏好设置
   // 密码字段仅在后端使用，前端不包含
   password?: never;
 }
@@ -115,6 +132,7 @@ export interface UpdateProfileRequest {
   avatar?: string;
   bio?: string;
   emergencyContact?: EmergencyContact;
+  preferences?: UserPreferences; // 添加偏好设置更新
 }
 
 // 类型守卫函数

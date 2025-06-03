@@ -1,10 +1,11 @@
-import { useState } from 'react';
+console.log('app/ride/[id].tsx loaded');
+import { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, Dimensions } from 'react-native';
 import { Text, Appbar, Surface, Button, Avatar, Chip, IconButton, Portal, Modal, TextInput } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import MapView, { Marker } from '../../components/MapView';
+import { MapView, Marker } from '../../components/MapView';
 import { format } from 'date-fns';
-import { PaceLevelRanges, PaceLevel } from '../../types/ride';
+import { PaceLevelRanges, PaceLevel, Ride } from '../../shared/types/ride';
 import { useMessages } from '../context/MessageContext';
 import { useRides } from '../context/RideContext';
 
@@ -12,79 +13,94 @@ export default function RideDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { getRide } = useRides();
-  const ride = getRide(id as string);
+  const [ride, setRide] = useState<Ride | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [message, setMessage] = useState('');
   const { sendMessage } = useMessages();
 
+  useEffect(() => {
+    const loadRide = async () => {
+      if (id) {
+        const rideData = await getRide(id as string);
+        setRide(rideData);
+        setLoading(false);
+      }
+    };
+    loadRide();
+  }, [id, getRide]);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (!ride) {
+    return (
+      <View style={styles.container}>
+        <Text>Ride not found</Text>
+      </View>
+    );
+  }
+
   const handleJoinRequest = () => {
-    if (ride?.organizer) {
+    if (ride?.creator) {
       sendMessage({
         id: Date.now().toString(),
         senderId: 'currentUser', // TODO: Replace with actual user ID
-        receiverId: ride.organizer.id,
+        receiverId: ride.creator._id,
         content: `Request to join ride: ${ride.title}\n\nMessage: ${message}`,
         timestamp: new Date(),
         type: 'JOIN_REQUEST',
-        rideId: ride.id,
+        rideId: ride._id,
       });
       setShowJoinModal(false);
     }
   };
 
   const handleJoinRequestApproval = () => {
-    if (ride?.organizer) {
+    if (ride?.creator) {
       const rideDetailsMessage = `Your request to join "${ride.title}" has been approved! 🎉\n\n` +
         `Here are the details:\n` +
-        `📅 Date: ${format(ride.startTime, 'EEEE, MMMM d, yyyy')}\n` +
-        `⏰ Time: ${format(ride.startTime, 'h:mm a')}\n` +
+        `📅 Date: ${format(new Date(ride.date), 'EEEE, MMMM d, yyyy')}\n` +
+        `⏰ Time: ${format(new Date(ride.startTime), 'h:mm a')}\n` +
         `📍 Meeting Point: ${ride.meetingPoint.address}\n` +
-        `🛣️ Distance: ${ride.route.distance}km\n` +
-        `⛰️ Elevation: ${ride.route.elevationGain}m\n` +
-        `🚴‍♂️ Pace: ${ride.pace}\n` +
-        `🌍 Terrain: ${ride.terrain}\n\n` +
-        `See you there! Feel free to message me if you have any questions.`;
+        `🚴‍♂️ Distance: ${ride.route.distance}km\n` +
+        `📈 Elevation: ${ride.route.elevationGain}m\n` +
+        `🏃‍♂️ Pace: ${ride.pace}\n` +
+        `🏔️ Terrain: ${ride.terrain}\n` +
+        `💪 Difficulty: ${ride.difficulty}\n\n` +
+        `See you there! 🚴‍♂️`;
 
       sendMessage({
         id: Date.now().toString(),
-        senderId: ride.organizer.id,
-        receiverId: 'requestingUser', // Replace with actual requesting user ID
+        senderId: ride.creator._id,
+        receiverId: 'currentUser', // TODO: Replace with actual user ID
         content: rideDetailsMessage,
         timestamp: new Date(),
         type: 'JOIN_APPROVED',
-        rideId: ride.id,
+        rideId: ride._id,
       });
     }
   };
 
   const handleMessageOrganizer = () => {
-    if (ride?.organizer) {
+    if (ride?.creator) {
       sendMessage({
         id: Date.now().toString(),
         senderId: 'currentUser', // Replace with actual user ID
-        receiverId: ride.organizer.id,
+        receiverId: ride.creator._id,
         content: message,
         timestamp: new Date(),
         type: 'CHAT',
-        rideId: ride.id,
+        rideId: ride._id,
       });
       router.push('/messages');
     }
   };
-
-  if (!ride) {
-    return (
-      <View style={styles.container}>
-        <Appbar.Header>
-          <Appbar.BackAction onPress={() => router.back()} />
-          <Appbar.Content title="Ride not found" />
-        </Appbar.Header>
-        <View style={styles.content}>
-          <Text>This ride could not be found.</Text>
-        </View>
-      </View>
-    );
-  }
 
   const paceRange = PaceLevelRanges[ride.pace as PaceLevel];
   const paceInMph = {
@@ -116,9 +132,9 @@ export default function RideDetailsScreen() {
                 source={{ uri: 'https://example.com/avatar.jpg' }}
               />
               <View style={styles.organizerInfo}>
-                <Text variant="bodyLarge">{ride.organizer.name}</Text>
+                <Text variant="bodyLarge">{ride.creator.name}</Text>
                 <View style={styles.rating}>
-                  <Text variant="bodyMedium">{ride.organizer.rating}</Text>
+                  <Text variant="bodyMedium">{ride.creator.rating}</Text>
                   <IconButton icon="star" size={16} />
                 </View>
               </View>
@@ -192,10 +208,10 @@ export default function RideDetailsScreen() {
 
             <Text variant="titleMedium" style={styles.sectionTitle}>Date & Time</Text>
             <Text variant="bodyMedium">
-              {format(ride.startTime, 'EEEE, MMMM d, yyyy')}
+              {format(new Date(ride.date), 'EEEE, MMMM d, yyyy')}
             </Text>
             <Text variant="bodyMedium">
-              {format(ride.startTime, 'h:mm a')}
+              {format(new Date(ride.startTime), 'h:mm a')}
             </Text>
           </View>
         </Surface>
