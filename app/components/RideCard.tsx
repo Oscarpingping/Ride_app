@@ -1,7 +1,8 @@
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Surface, Text, Avatar, Button, Chip, IconButton } from 'react-native-paper';
 import { format } from 'date-fns';
-import { Ride } from '../../types/ride';
+import { Ride } from '../../shared/types/ride';
 import { useRides } from '../context/RideContext';
 
 interface RideCardProps {
@@ -9,94 +10,68 @@ interface RideCardProps {
   onPress?: () => void;
 }
 
-export function RideCard({ ride, onPress }: RideCardProps) {
+export const RideCard: React.FC<RideCardProps> = ({ ride, onPress }) => {
   const { toggleSaveRide, isSaved } = useRides();
-  
+
   return (
-    <Surface style={styles.rideCard} elevation={2}>
-      <View style={styles.rideHeader}>
-        <View style={styles.rideHeaderText}>
-          <Text variant="titleMedium" style={styles.rideTitle}>{ride.title}</Text>
-          <Text variant="bodyMedium" style={styles.rideDate}>
-            {format(new Date(ride.startTime), 'EEE, MMM d • h:mm a')}
-          </Text>
+    <Surface style={styles.container} elevation={2}>
+      <View style={styles.header}>
+        <View style={styles.organizer}>
+          <Avatar.Image 
+            size={40} 
+            source={{ uri: ride.creator.avatar || 'https://via.placeholder.com/40' }} 
+          />
+          <View style={styles.organizerInfo}>
+            <Text variant="titleMedium">{ride.creator.name}</Text>
+            <Text variant="bodySmall">{format(new Date(ride.startTime), 'MMM d, yyyy h:mm a')}</Text>
+          </View>
         </View>
-        <IconButton 
-          icon={isSaved(ride.id) ? "bookmark" : "bookmark-outline"} 
-          onPress={() => toggleSaveRide(ride.id)} 
+        <IconButton
+          icon={isSaved(ride._id) ? 'bookmark' : 'bookmark-outline'}
+          onPress={() => toggleSaveRide(ride._id)}
         />
       </View>
 
-      <Text variant="bodyMedium" style={styles.rideDescription}>
-        {ride.description}
-      </Text>
+      <View style={styles.content}>
+        <Text variant="titleLarge" style={styles.title}>{ride.title}</Text>
+        <Text variant="bodyMedium" style={styles.description}>{ride.description}</Text>
+        
+        <View style={styles.details}>
+          <Chip icon="map-marker">{ride.meetingPoint.address}</Chip>
+          <Chip icon="road">{ride.route.distance}km</Chip>
+          <Chip icon="trending-up">{ride.route.elevationGain}m</Chip>
+        </View>
 
-      <View style={styles.chipContainer}>
-        <Chip icon="terrain" style={styles.chip}>{ride.terrain}</Chip>
-        <Chip icon="speedometer" style={styles.chip}>{ride.pace}</Chip>
-        <Chip icon="map-marker-distance" style={styles.chip}>{ride.route.distance}km</Chip>
-        <Chip icon="arrow-up-bold" style={styles.chip}>{ride.route.elevationGain}m</Chip>
+        <View style={styles.tags}>
+          <Chip>{ride.terrain}</Chip>
+          <Chip>{ride.pace}</Chip>
+          <Chip>{ride.difficulty}</Chip>
+        </View>
       </View>
 
-      <View style={styles.rideFooter}>
-        <View style={styles.organizer}>
-          <Avatar.Text size={36} label={ride.organizer.name.split(' ').map(n => n[0]).join('')} />
-          <View style={styles.organizerInfo}>
-            <Text variant="bodyMedium">Organized by {ride.organizer.name}</Text>
-            <Text variant="bodySmall" style={styles.rating}>{ride.organizer.rating} ★</Text>
-          </View>
-        </View>
-        <Button 
-          mode="contained"
-          onPress={onPress}
-        >
+      <View style={styles.footer}>
+        <Text variant="bodySmall">
+          {ride.currentParticipants}/{ride.maxParticipants} participants
+        </Text>
+        <Button mode="contained" onPress={onPress}>
           View Details
         </Button>
       </View>
     </Surface>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  rideCard: {
-    margin: 16,
+  container: {
+    margin: 8,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 8,
   },
-  rideHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  rideHeaderText: {
-    flex: 1,
-    marginRight: 8,
-  },
-  rideTitle: {
-    fontWeight: '600',
-  },
-  rideDate: {
-    color: '#666',
-    marginTop: 4,
-  },
-  rideDescription: {
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  chip: {
-    marginRight: 8,
-  },
-  rideFooter: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
+    marginBottom: 12,
   },
   organizer: {
     flexDirection: 'row',
@@ -105,8 +80,29 @@ const styles = StyleSheet.create({
   organizerInfo: {
     marginLeft: 12,
   },
-  rating: {
-    color: '#F4B400',
-    marginTop: 2,
+  content: {
+    marginBottom: 16,
+  },
+  title: {
+    marginBottom: 8,
+  },
+  description: {
+    marginBottom: 12,
+  },
+  details: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  tags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 }); 

@@ -1,14 +1,22 @@
-import { User } from './user';
+import { User } from './user-unified';
 
 export type TerrainType = 'Road' | 'Mountain' | 'Gravel' | 'MTB' | 'Urban' | 'Mixed';
 export type PaceLevel = 'Casual' | 'Moderate' | 'Fast';
 export type DifficultyLevel = 'Beginner' | 'Intermediate' | 'Advanced';
-export type GenderPreference = 'All' | 'Male' | 'Female';
+export type GenderPreference = 'All' | 'Men' | 'Women' | 'Non-binary';
 
 export interface Route {
   distance: number;
   elevationGain: number;
   gpxFile: string | null;
+  startPoint?: {
+    latitude: number;
+    longitude: number;
+  };
+  endPoint?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export interface Location {
@@ -34,22 +42,13 @@ export interface Ride {
   creator: User;
   participants: RideParticipant[];
   maxParticipants: number;
-  route: {
-    distance: number;
-    elevationGain: number;
-    startPoint: {
-      latitude: number;
-      longitude: number;
-    };
-    endPoint: {
-      latitude: number;
-      longitude: number;
-    };
-  };
-  pace: string;
-  terrain: string;
-  difficulty: string;
-  genderPreference: string;
+  currentParticipants: number;
+  route: Route;
+  meetingPoint: Location;
+  pace: PaceLevel;
+  terrain: TerrainType;
+  difficulty: DifficultyLevel;
+  genderPreference: GenderPreference;
   createdAt: Date;
   updatedAt: Date;
 }

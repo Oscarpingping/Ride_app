@@ -22,6 +22,10 @@ interface RideContextType {
   removeParticipatedRide: (rideId: string) => void;
   isRideParticipated: (rideId: string) => boolean;
   getParticipatedRides: () => Ride[];
+  toggleSaveRide: (rideId: string) => void;
+  isSaved: (rideId: string) => boolean;
+  addRide: (ride: Ride) => void;
+  removeRide: (rideId: string) => void;
 }
 
 const RideContext = createContext<RideContextType | undefined>(undefined);
@@ -144,6 +148,26 @@ export function RideProvider({ children }: { children: ReactNode }) {
     return rides.filter(ride => participatedRides.includes(ride._id));
   }, [rides, participatedRides]);
 
+  const toggleSaveRide = useCallback((rideId: string) => {
+    setSavedRides(prev => 
+      prev.includes(rideId) 
+        ? prev.filter(id => id !== rideId)
+        : [...prev, rideId]
+    );
+  }, []);
+
+  const isSaved = useCallback((rideId: string) => {
+    return savedRides.includes(rideId);
+  }, [savedRides]);
+
+  const addRide = useCallback((ride: Ride) => {
+    setRides(prev => [...prev, ride]);
+  }, []);
+
+  const removeRide = useCallback((rideId: string) => {
+    setRides(prev => prev.filter(ride => ride._id !== rideId));
+  }, []);
+
   return (
     <RideContext.Provider
       value={{
@@ -167,6 +191,10 @@ export function RideProvider({ children }: { children: ReactNode }) {
         removeParticipatedRide,
         isRideParticipated,
         getParticipatedRides,
+        toggleSaveRide,
+        isSaved,
+        addRide,
+        removeRide
       }}
     >
       {children}
