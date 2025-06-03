@@ -1,9 +1,9 @@
 import { TerrainType, PaceLevel, DifficultyLevel } from '../../shared/types/ride';
 
 export interface FilterState {
-  terrain: TerrainType | null;
-  pace: PaceLevel | null;
-  difficulty: DifficultyLevel | null;
+  terrain: TerrainType[];
+  pace: PaceLevel[];
+  difficulty: DifficultyLevel[];
   dateRange: {
     start: Date | null;
     end: Date | null;
@@ -24,9 +24,9 @@ export interface FilterState {
 }
 
 export const defaultFilterState: FilterState = {
-  terrain: null,
-  pace: null,
-  difficulty: null,
+  terrain: [],
+  pace: [],
+  difficulty: [],
   dateRange: {
     start: null,
     end: null

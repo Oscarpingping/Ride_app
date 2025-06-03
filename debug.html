@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Auth</title>
+</head>
+<body>
+    <h1>Debug Authentication</h1>
+    <div id="output"></div>
+    
+    <script>
+        function checkAuth() {
+            const output = document.getElementById('output');
+            
+            // Check localStorage
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            output.innerHTML = `
+                <h2>LocalStorage:</h2>
+                <p>Token: ${token ? 'exists' : 'not found'}</p>
+                <p>User: ${user ? user : 'not found'}</p>
+                
+                <h2>All localStorage keys:</h2>
+                <ul>
+                    ${Object.keys(localStorage).map(key => `<li>${key}: ${localStorage.getItem(key)}</li>`).join('')}
+                </ul>
+                
+                <h2>Test API Call:</h2>
+                <button onclick="testAPI()">Test Create Ride API</button>
+                <div id="api-result"></div>
+            `;
+        }
+        
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch('http://localhost:5001/api/rides', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token && { 'Authorization': `Bearer ${token}` }),
+                    },
+                    body: JSON.stringify({
+                        title: "Debug Test Ride",
+                        description: "Testing API from debug page",
+                        difficulty: "Beginner",
+                        terrain: "Urban",
+                        pace: { min: 10, max: 20, unit: "km/h" },
+                        maxParticipants: 5,
+                        meetingPoint: {
+                            address: "Test Location",
+                            coordinates: { lat: 40.7829, lng: -73.9654 }
+                        },
+                        dateTime: new Date().toISOString(),
+                        isRecurring: false
+                    })
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        checkAuth();
+    </script>
+</body>
+</html>

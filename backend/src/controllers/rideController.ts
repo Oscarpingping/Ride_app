@@ -13,30 +13,72 @@ export const createRide = async (req: AuthRequest, res: Response) => {
       } as ApiResponse);
     }
 
+    console.log('Creating ride with data:', req.body);
+
     const {
       title,
       description,
-      startTime,
-      endTime,
+      dateTime,
       meetingPoint,
-      route,
+      terrain,
       difficulty,
       pace,
       maxParticipants,
-      isPrivate,
     } = req.body;
+
+    // 验证必需字段
+    if (!title || !description || !dateTime || !meetingPoint || !difficulty) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少必需字段',
+      } as ApiResponse);
+    }
+
+    // 转换前端数据格式到后端格式
+    const startTime = new Date(dateTime);
+    const endTime = new Date(startTime.getTime() + 3 * 60 * 60 * 1000); // 默认3小时后结束
+
+    // 转换meetingPoint格式
+    const backendMeetingPoint = {
+      latitude: meetingPoint.coordinates?.lat || 0,
+      longitude: meetingPoint.coordinates?.lng || 0,
+      address: meetingPoint.address || '',
+    };
+
+    // 转换difficulty格式
+    const difficultyMap: { [key: string]: string } = {
+      'Beginner': 'easy',
+      'Intermediate': 'medium',
+      'Advanced': 'hard',
+    };
+    const backendDifficulty = difficultyMap[difficulty] || 'easy';
+
+    // 转换terrain到route格式
+    const terrainMap: { [key: string]: string } = {
+      'Urban': 'road',
+      'Mountain': 'mountain',
+      'Gravel': 'gravel',
+    };
+    const routeType = terrainMap[terrain] || 'road';
+
+    // 转换pace格式（取平均值）
+    const backendPace = pace?.min && pace?.max ? (pace.min + pace.max) / 2 : 20;
 
     const ride = new Ride({
       title,
       description,
       startTime,
       endTime,
-      meetingPoint,
-      route,
-      difficulty,
-      pace,
-      maxParticipants,
-      isPrivate,
+      meetingPoint: backendMeetingPoint,
+      route: {
+        type: routeType,
+        distance: 20, // 默认距离
+        elevation: 100, // 默认爬升
+      },
+      difficulty: backendDifficulty,
+      pace: backendPace,
+      maxParticipants: maxParticipants || 10,
+      isPrivate: false, // 默认公开
       organizer: req.user._id,
       participants: [req.user._id],
       currentParticipants: 1,
@@ -44,11 +86,14 @@ export const createRide = async (req: AuthRequest, res: Response) => {
 
     await ride.save();
 
+    console.log('Ride created successfully:', ride._id);
+
     return res.status(201).json({
       success: true,
       data: ride,
     } as ApiResponse);
   } catch (error) {
+    console.error('Error creating ride:', error);
     return res.status(500).json({
       success: false,
       error: '创建活动失败，请稍后重试',
