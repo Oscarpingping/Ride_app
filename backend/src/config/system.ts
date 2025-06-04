@@ -51,11 +51,11 @@ export const SYSTEM_CONFIG = {
   // 邮件配置
   EMAIL: {
     FROM: {
-      ADDRESS: process.env.EMAIL_FROM_ADDRESS || 'l.tao0866@gmail.com',
-      NAME: process.env.EMAIL_FROM_NAME || 'ride_app Support'
+      ADDRESS: process.env.EMAIL_FROM_ADDRESS || 'wildpals@outlook.com',
+      NAME: process.env.EMAIL_FROM_NAME || 'WildPals Support'
     },
     SMTP: {
-      HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
+      HOST: process.env.SMTP_HOST || 'smtp-mail.outlook.com',
       PORT: parseInt(process.env.SMTP_PORT || '587'),
       USER: process.env.SMTP_USER,
       PASS: process.env.SMTP_PASS
@@ -79,8 +79,8 @@ export const SYSTEM_CONFIG = {
       ERROR_URL: process.env.PASSWORD_RESET_ERROR_URL || 'http://localhost:3000/reset-error'
     },
     
-    // 重置链接基础URL
-    BASE_URL: process.env.PASSWORD_RESET_BASE_URL || 'http://localhost:3000/reset-password',
+    // 重置链接基础URL (指向后端服务器的web页面)
+    BASE_URL: process.env.PASSWORD_RESET_BASE_URL || 'http://localhost:5001/reset/password',
     
     // 重置令牌过期时间（小时）
     EXPIRY_HOURS: 24

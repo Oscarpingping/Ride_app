@@ -25,14 +25,14 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
   try {
     // 检查是否配置了真实的SMTP设置
     if (!SYSTEM_CONFIG.EMAIL.SMTP.USER || !SYSTEM_CONFIG.EMAIL.SMTP.PASS || 
-        SYSTEM_CONFIG.EMAIL.SMTP.USER === 'your-email@gmail.com') {
+        SYSTEM_CONFIG.EMAIL.SMTP.USER === 'your-email@outlook.com') {
       // 开发环境下，只记录邮件内容而不实际发送
-      console.log('=== 邮件发送模拟 (开发环境) ===');
-      console.log('收件人:', options.to);
-      console.log('主题:', options.subject);
-      console.log('内容:', options.text);
-      console.log('HTML:', options.html);
-      console.log('=== 邮件发送模拟结束 ===');
+      console.log('=== 📧 邮件发送模拟 (测试环境) ===');
+      console.log('📮 收件人:', options.to);
+      console.log('📝 主题:', options.subject);
+      console.log('📄 文本内容:', options.text);
+      console.log('🌐 HTML内容:', options.html);
+      console.log('=== ✅ 邮件发送模拟成功 ===');
       return;
     }
 

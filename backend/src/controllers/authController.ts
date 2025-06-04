@@ -9,6 +9,25 @@ import { sendEmail } from '../utils/email';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
 
+// 临时内存存储用于测试（当MongoDB不可用时）
+const memoryUsers = new Map();
+const memoryTokens = new Map();
+
+// 初始化测试用户
+memoryUsers.set('ls.na8@outlook.com', {
+  _id: 'test-user-id',
+  name: 'Test User',
+  email: 'ls.na8@outlook.com',
+  password: '$2a$10$example.hash.for.testing', // 模拟加密密码
+  rating: 0,
+  ridesJoined: 0,
+  ridesCreated: 0,
+  createdAt: new Date(),
+  updatedAt: new Date()
+});
+
+console.log('🧪 测试用户已初始化: ls.na8@outlook.com');
+
 // 用户注册控制器
 export const register = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -218,25 +237,56 @@ export const logout = async (_req: Request, res: Response): Promise<Response> =>
 export const requestPasswordReset = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
+    console.log(`🔐 密码重置请求: ${email}`);
 
-    // 查找用户
-    const user = await User.findOne({ email });
+    // 首先尝试从内存存储查找用户（用于测试）
+    let user = memoryUsers.get(email);
+    let isMemoryUser = !!user;
+    
+    if (!user) {
+      try {
+        // 如果内存中没有，尝试从数据库查找
+        user = await User.findOne({ email });
+      } catch (dbError) {
+        console.log('📊 数据库不可用，使用内存存储进行测试');
+        // 数据库不可用时，为了安全返回成功消息
+        return res.json({
+          success: true,
+          message: 'If an account exists with this email, you will receive a password reset link',
+        } as ApiResponse);
+      }
+    }
+
     if (!user) {
       // 为了安全，即使用户不存在也返回成功
+      console.log(`❌ 用户不存在: ${email}`);
       return res.json({
         success: true,
         message: 'If an account exists with this email, you will receive a password reset link',
       } as ApiResponse);
     }
 
+    console.log(`✅ 找到用户: ${email} (${isMemoryUser ? '内存存储' : '数据库'})`);
+
     // 生成重置令牌
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetExpires = new Date(Date.now() + SYSTEM_CONFIG.PASSWORD_RESET.EXPIRY_HOURS * 3600000);
 
-    // 保存重置令牌到用户记录
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = resetExpires;
-    await user.save();
+    console.log(`🔑 生成重置令牌: ${resetToken}`);
+
+    // 保存重置令牌
+    if (isMemoryUser) {
+      // 保存到内存存储
+      user.resetPasswordToken = resetToken;
+      user.resetPasswordExpires = resetExpires;
+      memoryUsers.set(email, user);
+      memoryTokens.set(resetToken, { email, expires: resetExpires });
+    } else {
+      // 保存到数据库
+      user.resetPasswordToken = resetToken;
+      user.resetPasswordExpires = resetExpires;
+      await user.save();
+    }
 
     // 构建重置链接
     const resetUrl = `${SYSTEM_CONFIG.PASSWORD_RESET.BASE_URL}?token=${resetToken}`;
@@ -274,25 +324,56 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
 export const resetPassword = async (req: Request, res: Response) => {
   try {
     const { token, password } = req.body;
+    console.log(`🔐 密码重置请求，令牌: ${token}`);
 
-    // 查找具有有效重置令牌的用户
-    const user = await User.findOne({
-      resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() }
-    });
+    // 首先检查内存存储中的令牌
+    const tokenData = memoryTokens.get(token);
+    let user = null;
+    let isMemoryUser = false;
+
+    if (tokenData && tokenData.expires > new Date()) {
+      // 从内存存储获取用户
+      user = memoryUsers.get(tokenData.email);
+      isMemoryUser = true;
+      console.log(`✅ 在内存存储中找到有效令牌: ${tokenData.email}`);
+    } else {
+      try {
+        // 尝试从数据库查找
+        user = await User.findOne({
+          resetPasswordToken: token,
+          resetPasswordExpires: { $gt: Date.now() }
+        });
+        console.log(`📊 数据库查询结果: ${user ? '找到用户' : '未找到用户'}`);
+      } catch (dbError) {
+        console.log('📊 数据库不可用，仅使用内存存储');
+      }
+    }
 
     if (!user) {
+      console.log(`❌ 无效或过期的重置令牌: ${token}`);
       return res.status(400).json({
         success: false,
         error: 'Password reset token is invalid or has expired',
       } as ApiResponse);
     }
 
+    console.log(`🔄 更新密码: ${user.email} (${isMemoryUser ? '内存存储' : '数据库'})`);
+
     // 更新密码
-    user.password = password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
-    await user.save();
+    if (isMemoryUser) {
+      // 更新内存存储
+      user.password = password; // 在实际应用中应该加密
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      memoryUsers.set(user.email, user);
+      memoryTokens.delete(token);
+    } else {
+      // 更新数据库
+      user.password = password;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+    }
 
     // 发送确认邮件
     await sendEmail({
@@ -319,18 +400,35 @@ export const resetPassword = async (req: Request, res: Response) => {
 export const resetPasswordWeb = async (req: Request, res: Response) => {
   try {
     const { token } = req.query;
+    console.log(`🌐 Web密码重置页面请求，令牌: ${token}`);
     
     if (!token) {
       return res.status(400).send('Invalid reset link');
     }
 
-    // 验证token
-    const user = await User.findOne({
-      resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() }
-    });
+    // 首先检查内存存储中的令牌
+    const tokenData = memoryTokens.get(token as string);
+    let user = null;
+
+    if (tokenData && tokenData.expires > new Date()) {
+      // 从内存存储获取用户
+      user = memoryUsers.get(tokenData.email);
+      console.log(`✅ Web页面：在内存存储中找到有效令牌: ${tokenData.email}`);
+    } else {
+      try {
+        // 尝试从数据库查找
+        user = await User.findOne({
+          resetPasswordToken: token,
+          resetPasswordExpires: { $gt: Date.now() }
+        });
+        console.log(`📊 Web页面：数据库查询结果: ${user ? '找到用户' : '未找到用户'}`);
+      } catch (dbError) {
+        console.log('📊 Web页面：数据库不可用，仅使用内存存储');
+      }
+    }
 
     if (!user) {
+      console.log(`❌ Web页面：无效或过期的重置令牌: ${token}`);
       return res.status(400).send('Password reset token is invalid or has expired');
     }
 
@@ -386,7 +484,7 @@ export const resetPasswordWeb = async (req: Request, res: Response) => {
                 
                 const result = await response.json();
                 if (result.success) {
-                  window.location.href = '/reset-success';
+                  window.location.href = 'http://localhost:5001/reset-success';
                 } else {
                   error.textContent = result.error || 'Failed to reset password';
                 }

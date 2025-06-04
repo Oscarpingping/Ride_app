@@ -1,5 +1,5 @@
 import express from 'express';
-import mongoose from 'mongoose';
+
 import cors from 'cors';
 import 'dotenv/config';
 import authRoutes from './routes/auth';
@@ -31,10 +31,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 连接数据库
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ride_app')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((error) => console.error('MongoDB connection error:', error));
+// 连接数据库（使用内存数据库进行测试）
+import connectDB from './config/database';
+connectDB();
 
 // 路由
 app.use('/api/auth', authRoutes);
