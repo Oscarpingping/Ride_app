@@ -31,10 +31,11 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === 'authRoot';
     const inWelcomeScreen = segments[0] === 'welcome';
+    const inResetPasswordScreen = segments[0] === 'resetPassword';
     const inTabsGroup = segments[0] === '(tabs)';
 
-    if (!isAuthenticated && !inAuthGroup && !inWelcomeScreen) {
-      // 未登录且不在认证页面或欢迎页面，重定向到欢迎页
+    if (!isAuthenticated && !inAuthGroup && !inWelcomeScreen && !inResetPasswordScreen) {
+      // 未登录且不在认证页面、欢迎页面或密码重置页面，重定向到欢迎页
       router.replace('/welcome');
     } else if (isAuthenticated && (inAuthGroup || inWelcomeScreen)) {
       // 已登录且在认证页面或欢迎页面，重定向到主页

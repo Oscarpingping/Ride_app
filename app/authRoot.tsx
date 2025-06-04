@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Text, TextInput, Button, Surface, HelperText } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from './context/AuthContext';
 import { AuthApi } from '../shared/api/auth';
+
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,6 +15,7 @@ export default function AuthScreen() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
   const router = useRouter();
   const params = useLocalSearchParams();
   const { login, register } = useAuth();
@@ -73,7 +75,11 @@ export default function AuthScreen() {
     }
   };
 
+
+
   const handleForgotPassword = async () => {
+    setError('');
+    
     if (!validateEmail(email)) {
       setError('Please enter a valid email address');
       return;
@@ -81,24 +87,16 @@ export default function AuthScreen() {
     
     try {
       setIsLoading(true);
-      setError('');
       
       const response = await AuthApi.requestPasswordReset({ email });
       
       if (response.success) {
-        Alert.alert(
-          'Password Reset Sent',
-          'If an account exists with this email, you will receive a password reset link shortly.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                setIsForgotPassword(false);
-                setEmail('');
-              }
-            }
-          ]
-        );
+        setError('Password reset email sent successfully!');
+        setTimeout(() => {
+          setIsForgotPassword(false);
+          setEmail('');
+          setError('');
+        }, 3000);
       } else {
         setError(response.error || 'Failed to send password reset email');
       }
@@ -196,6 +194,8 @@ export default function AuthScreen() {
                   mode="contained-tonal"
                   onPress={handleForgotPassword}
                   style={styles.actionButton}
+                  loading={isLoading}
+                  disabled={isLoading}
                 >
                   Send Reset Email
                 </Button>
