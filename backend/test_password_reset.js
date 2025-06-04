@@ -3,7 +3,24 @@ const crypto = require('crypto');
 const path = require('path');
 
 const app = express();
+
+// 添加CORS支持
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 app.use(express.json());
+
+// 静态文件服务
+app.use('/assets', express.static('public/assets'));
 app.use(express.static('public'));
 
 // 模拟用户数据库
@@ -24,8 +41,19 @@ app.post('/api/auth/request-reset', async (req, res) => {
     const { email } = req.body;
     console.log(`[${new Date().toISOString()}] 🔐 密码重置请求: ${email}`);
 
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please enter a valid email address'
+      });
+    }
+
     const user = users.get(email);
     if (!user) {
+      // 为了安全，即使邮箱不存在也返回成功消息，但不发送邮件
+      console.log(`[${new Date().toISOString()}] ⚠️ Email not registered: ${email}`);
       return res.json({
         success: true,
         message: 'If an account exists with this email, you will receive a password reset link',
@@ -34,40 +62,47 @@ app.post('/api/auth/request-reset', async (req, res) => {
 
     // 生成重置令牌
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetExpires = new Date(Date.now() + 24 * 3600000); // 24小时
+    const resetExpires = new Date(Date.now() + 72 * 3600000); // 72小时有效期
 
     // 保存重置令牌
     resetTokens.set(resetToken, {
       email: email,
-      expires: resetExpires
+      expires: resetExpires,
+      used: false
     });
 
     // 构建重置链接
     const resetUrl = `http://localhost:${PORT}/reset/password?token=${resetToken}`;
 
     // 模拟发送邮件
-    console.log(`[${new Date().toISOString()}] 📧 模拟发送密码重置邮件到: ${email}`);
-    console.log(`[${new Date().toISOString()}] 🔗 重置链接: ${resetUrl}`);
-    console.log(`[${new Date().toISOString()}] 🎫 重置令牌: ${resetToken}`);
+    console.log(`[${new Date().toISOString()}] 📧 Sending password reset email to registered email: ${email}`);
+    console.log(`[${new Date().toISOString()}] 🔗 Reset link: ${resetUrl}`);
+    console.log(`[${new Date().toISOString()}] 🎫 Reset token: ${resetToken}`);
+    console.log(`[${new Date().toISOString()}] ⏰ Valid until: ${resetExpires.toLocaleString()}`);
 
     // 模拟邮件内容
     const emailContent = `
-=== 密码重置邮件 ===
-收件人: ${email}
-主题: WildPals - 密码重置请求
+=== WildPals Password Reset Email ===
+To: ${email}
+Subject: WildPals - Password Reset Request
 
-您好，
+Dear User,
 
-您收到这封邮件是因为您（或其他人）请求重置您的WildPals账户密码。
+You are receiving this email because you requested a password reset for your WildPals account.
 
-请点击以下链接来重置您的密码：
+Please click the following link to reset your password:
 ${resetUrl}
 
-如果您没有请求密码重置，请忽略此邮件，您的密码将保持不变。
+Important reminders:
+• This link is valid for 72 hours only
+• The link can only be used once
+• If you did not request a password reset, please ignore this email
+• For your account security, do not share this link with anyone
 
-此链接将在24小时后过期。
+If you have any questions, please contact our support team.
 
-WildPals团队
+WildPals Team
+${new Date().toLocaleString()}
 ========================
 `;
 
@@ -107,14 +142,20 @@ app.get('/reset/password', (req, res) => {
     return res.redirect('/reset-error?reason=expired_token');
   }
 
+  // 检查token是否已使用
+  if (resetData.used) {
+    resetTokens.delete(token);
+    return res.redirect('/reset-error?reason=token_used');
+  }
+
   // 返回密码重置表单
   res.send(`
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>重置密码 - WildPals</title>
+    <title>Reset Password - WildPals</title>
     <style>
         * {
             margin: 0;
@@ -237,25 +278,26 @@ app.get('/reset/password', (req, res) => {
 <body>
     <div class="container">
         <div class="logo">
-            <h1>🐾 WildPals</h1>
+            <img src="/assets/images/logo.png" alt="WildPals" style="height: 60px; margin-bottom: 10px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <h1 style="display: none;">🐾 WildPals</h1>
         </div>
         
         <div class="info">
-            <p>请输入您的新密码。密码应至少包含8个字符。</p>
+            <p>Please enter your new password. Password should be at least 8 characters long.</p>
         </div>
         
         <form id="resetForm">
             <div class="form-group">
-                <label for="newPassword">新密码</label>
+                <label for="newPassword">New Password</label>
                 <input type="password" id="newPassword" name="newPassword" required minlength="8">
             </div>
             
             <div class="form-group">
-                <label for="confirmPassword">确认新密码</label>
+                <label for="confirmPassword">Confirm New Password</label>
                 <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8">
             </div>
             
-            <button type="submit" class="btn" id="submitBtn">重置密码</button>
+            <button type="submit" class="btn" id="submitBtn">Reset Password</button>
         </form>
         
         <div id="message"></div>
@@ -275,18 +317,18 @@ app.get('/reset/password', (req, res) => {
             
             // 验证密码
             if (newPassword.length < 8) {
-                messageDiv.innerHTML = '<div class="message error">密码至少需要8个字符</div>';
+                messageDiv.innerHTML = '<div class="message error">Password must be at least 8 characters long</div>';
                 return;
             }
             
             if (newPassword !== confirmPassword) {
-                messageDiv.innerHTML = '<div class="message error">两次输入的密码不匹配</div>';
+                messageDiv.innerHTML = '<div class="message error">Passwords do not match</div>';
                 return;
             }
             
             // 禁用按钮
             submitBtn.disabled = true;
-            submitBtn.textContent = '重置中...';
+            submitBtn.textContent = 'Resetting...';
             
             try {
                 const response = await fetch('/api/auth/reset-password', {
@@ -303,18 +345,18 @@ app.get('/reset/password', (req, res) => {
                 const data = await response.json();
                 
                 if (data.success) {
-                    messageDiv.innerHTML = '<div class="message success">密码重置成功！正在跳转到登录页面...</div>';
+                    messageDiv.innerHTML = '<div class="message success">Password reset successfully! Redirecting to login page...</div>';
                     setTimeout(() => {
                         window.location.href = '/reset-success';
                     }, 2000);
                 } else {
-                    messageDiv.innerHTML = '<div class="message error">' + (data.error || '重置失败，请重试') + '</div>';
+                    messageDiv.innerHTML = '<div class="message error">' + (data.error || 'Reset failed, please try again') + '</div>';
                 }
             } catch (error) {
-                messageDiv.innerHTML = '<div class="message error">网络错误，请重试</div>';
+                messageDiv.innerHTML = '<div class="message error">Network error, please try again</div>';
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = '重置密码';
+                submitBtn.textContent = 'Reset Password';
             }
         });
     </script>
@@ -353,11 +395,23 @@ app.post('/api/auth/reset-password', (req, res) => {
       });
     }
     
+    // 检查token是否已使用
+    if (resetData.used) {
+      resetTokens.delete(token);
+      return res.status(400).json({
+        success: false,
+        error: 'Reset token has already been used'
+      });
+    }
+    
+    // 标记token为已使用
+    resetData.used = true;
+    
     // 更新用户密码
     const user = users.get(resetData.email);
     if (user) {
       user.password = 'hashed_' + newPassword; // 模拟密码哈希
-      console.log(`[${new Date().toISOString()}] ✅ 密码重置成功: ${resetData.email}`);
+      console.log(`[${new Date().toISOString()}] ✅ Password reset successfully: ${resetData.email}`);
     }
     
     // 删除使用过的令牌

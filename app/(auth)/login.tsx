@@ -71,6 +71,13 @@ export default function LoginScreen() {
         >
           Don't have an account? Register
         </Button>
+        <Button
+          mode="text"
+          onPress={() => router.push('/(auth)/forgot-password')}
+          style={styles.link}
+        >
+          Forgot Password?
+        </Button>
       </View>
     </View>
   );
