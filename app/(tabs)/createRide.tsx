@@ -4,6 +4,8 @@ import { Button, TextInput, Text, Surface, SegmentedButtons, Chip, Portal, Modal
 import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import MapView, { Marker } from '../../components/MapView';
+import { RideApi } from '../../shared/api/ride';
+import { useAuth } from '../context/AuthContext';
 
 // 为web平台定义MapPressEvent类型
 interface MapPressEvent {
@@ -50,6 +52,7 @@ function debounce(func: (...args: any[]) => void, delay: number) {
 
 export default function CreateRideScreen() {
   const router = useRouter();
+  const { currentUser, isAuthenticated } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('Intermediate');
@@ -70,6 +73,7 @@ export default function CreateRideScreen() {
   });
   const [addressInput, setAddressInput] = useState('');
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   const debouncedGeocode = useRef(
     debounce(async (text: string) => {
@@ -100,22 +104,74 @@ export default function CreateRideScreen() {
     setShowTimePicker(true);
   };
 
-  const handleCreateRide = () => {
-    // TODO: Implement ride creation with Firebase
-    console.log('Creating ride:', {
-      title,
-      description,
-      difficulty,
-      terrain,
-      paceUnit,
-      minSpeed,
-      maxSpeed,
-      maxParticipants,
-      date,
-      isRecurring,
-      meetingPoint,
-    });
-    router.back();
+  const handleCreateRide = async () => {
+    // 验证用户是否已登录
+    if (!isAuthenticated || !currentUser) {
+      Alert.alert('错误', '请先登录后再创建活动');
+      return;
+    }
+
+    // 验证必填字段
+    if (!title.trim()) {
+      Alert.alert('错误', '请输入活动标题');
+      return;
+    }
+
+    if (!description.trim()) {
+      Alert.alert('错误', '请输入活动描述');
+      return;
+    }
+
+    if (!meetingPoint.address) {
+      Alert.alert('错误', '请选择集合地点');
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      const rideData = {
+        title: title.trim(),
+        description: description.trim(),
+        difficulty,
+        terrain,
+        pace: {
+          min: parseInt(minSpeed) || 15,
+          max: parseInt(maxSpeed) || 25,
+          unit: paceUnit,
+        },
+        maxParticipants: parseInt(maxParticipants) || 10,
+        meetingPoint: {
+          address: meetingPoint.address,
+          coordinates: {
+            lat: meetingPoint.latitude,
+            lng: meetingPoint.longitude,
+          },
+        },
+        dateTime: date.toISOString(),
+        isRecurring,
+      };
+
+      console.log('Creating ride with data:', rideData);
+
+      const response = await RideApi.createRide(rideData);
+
+      if (response.success) {
+        Alert.alert('成功', '活动创建成功！', [
+          {
+            text: '确定',
+            onPress: () => router.push('/(tabs)/home'),
+          },
+        ]);
+      } else {
+        Alert.alert('错误', response.error || '创建活动失败，请稍后重试');
+      }
+    } catch (error) {
+      console.error('Create ride error:', error);
+      Alert.alert('错误', '创建活动时发生错误，请稍后重试');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleAddressChange = (text: string) => {
@@ -290,8 +346,10 @@ export default function CreateRideScreen() {
           mode="contained"
           onPress={handleCreateRide}
           style={styles.button}
+          loading={isCreating}
+          disabled={isCreating}
         >
-          Create Ride
+          {isCreating ? 'Creating...' : 'Create Ride'}
         </Button>
       </Surface>
 

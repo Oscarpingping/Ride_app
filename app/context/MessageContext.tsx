@@ -21,8 +21,11 @@ interface MessageContextType {
   threads: ChatThread[];
   messages: Message[];
   selectedThread: ChatThread | null;
+  loading: boolean;
+  error: string | null;
   selectThread: (thread: ChatThread) => void;
   sendMessage: (message: Message) => void;
+  getMessages: () => Promise<void>;
   getThreadMessages: (threadId: string) => Message[];
   getMessagesForUser: (userId: string) => Message[];
   getMessagesForRide: (rideId: string) => Message[];
@@ -34,9 +37,27 @@ export function MessageProvider({ children }: { children: ReactNode }) {
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedThread, setSelectedThread] = useState<ChatThread | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const selectThread = useCallback((thread: ChatThread) => {
     setSelectedThread(thread);
+  }, []);
+
+  const getMessages = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // TODO: Implement API call to fetch messages from backend
+      // For now, just simulate loading
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // setMessages(fetchedMessages);
+      // setThreads(fetchedThreads);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch messages');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const sendMessage = useCallback((message: Message) => {
@@ -90,8 +111,11 @@ export function MessageProvider({ children }: { children: ReactNode }) {
         threads,
         messages,
         selectedThread,
+        loading,
+        error,
         selectThread,
         sendMessage,
+        getMessages,
         getThreadMessages,
         getMessagesForUser,
         getMessagesForRide,
