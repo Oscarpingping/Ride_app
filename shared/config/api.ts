@@ -15,7 +15,7 @@ export const getApiBaseUrl = (): string => {
   if (typeof window === 'undefined' || !window.location) {
     // 开发环境
     if (__DEV__) {
-      return 'http://localhost:5002';
+      return 'http://localhost:5001';
     }
     // 生产环境
     return 'https://your-production-api.com';
@@ -23,7 +23,7 @@ export const getApiBaseUrl = (): string => {
   
   // 在Web环境中
   if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:5002';
+    return 'http://localhost:5001';
   }
   
   return 'https://your-production-api.com';

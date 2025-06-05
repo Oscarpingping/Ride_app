@@ -18,7 +18,7 @@ export default function AuthScreen() {
 
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { login, register } = useAuth();
+  const { login, register, currentUser } = useAuth();
 
   useEffect(() => {
     // 检查 URL 参数，设置登录/注册状态
@@ -51,7 +51,12 @@ export default function AuthScreen() {
           setError('Please enter your password');
           return;
         }
-        await login({ email, password });
+        const result = await login({ email, password });
+        if (!result.success) {
+          setError(result.error || 'Login failed, please check your credentials');
+          return;
+        }
+        router.replace('/(tabs)/home');
       } else {
         if (!name.trim()) {
           setError('Please enter your name');
@@ -65,9 +70,13 @@ export default function AuthScreen() {
           setError('Passwords do not match');
           return;
         }
-        await register({ email, password, name });
+        const result = await register({ email, password, name });
+        if (!result.success) {
+          setError(result.error || 'Registration failed, please try again');
+          return;
+        }
+        router.replace('/(tabs)/home');
       }
-      router.replace('/(tabs)/home');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Operation failed, please try again');
     } finally {
@@ -91,9 +100,8 @@ export default function AuthScreen() {
       const response = await AuthApi.requestPasswordReset({ email });
       
       if (response.success) {
-        setError('Password reset email sent successfully!');
+        setError('Password reset link has been sent to your email');
         setTimeout(() => {
-          setIsForgotPassword(false);
           setEmail('');
           setError('');
         }, 3000);

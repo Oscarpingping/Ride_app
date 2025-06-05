@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, TextInput, Avatar, Portal, Modal, ActivityIndicator, List, Divider, FAB } from 'react-native-paper';
-import { useRouter } from 'expo-router';
 import { useAuth } from './context/AuthContext';
 import { useRides } from './context/RideContext';
 import { ClubApi } from '../shared/api/club';
@@ -12,13 +11,24 @@ import type { Ride } from '../shared/types/ride';
 import type { Club } from '../shared/types/club';
 
 export default function ProfileScreen() {
-  const router = useRouter();
   const { currentUser, isAuthenticated, isLoading, error, login, register, logout } = useAuth();
   const { rides } = useRides();
   const [activeTab, setActiveTab] = useState('activities');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showCreateClubModal, setShowCreateClubModal] = useState(false);
   const [showJoinClubModal, setShowJoinClubModal] = useState(false);
+  const [userDismissedModal, setUserDismissedModal] = useState(false);
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [registerData, setRegisterData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [resetEmail, setResetEmail] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [clubData, setClubData] = useState({
     name: '',
@@ -37,10 +47,15 @@ export default function ProfileScreen() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
-      router.replace('/(auth)/login');
+    // 给用户一些时间浏览页面，然后再显示登录提示
+    if (!isAuthenticated && !isLoading && !userDismissedModal) {
+      const timer = setTimeout(() => {
+        setShowLoginModal(true);
+      }, 2000); // 2秒后显示登录模态框
+      
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, userDismissedModal]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -187,7 +202,204 @@ export default function ProfileScreen() {
   }
 
   if (!isAuthenticated) {
-    return null; // 让路由处理重定向
+    return (
+      <View style={styles.container}>
+        <View style={styles.authContainer}>
+          <Text style={styles.authTitle}>Welcome to WildPals</Text>
+          <Text style={styles.authSubtitle}>Please login or register to continue</Text>
+          <View style={styles.authButtons}>
+            <Button mode="contained" onPress={() => {
+              setShowLoginModal(true);
+              setUserDismissedModal(false);
+            }} style={styles.authButton}>
+              Login
+            </Button>
+            <Button mode="outlined" onPress={() => {
+              setShowRegisterModal(true);
+              setUserDismissedModal(false);
+            }} style={styles.authButton}>
+              Register
+            </Button>
+          </View>
+        </View>
+
+        <Portal>
+          <Modal
+            visible={showLoginModal}
+            onDismiss={() => {
+              setShowLoginModal(false);
+              setUserDismissedModal(true);
+            }}
+            contentContainerStyle={styles.modalContainer}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Login</Text>
+              <Button 
+                mode="text" 
+                onPress={() => {
+                  setShowLoginModal(false);
+                  setUserDismissedModal(true);
+                }}
+                style={styles.closeButton}
+              >
+                ✕
+              </Button>
+            </View>
+            <TextInput
+              label="Email"
+              value={loginData.email}
+              onChangeText={(text) => setLoginData({ ...loginData, email: text })}
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TextInput
+              label="Password"
+              value={loginData.password}
+              onChangeText={(text) => setLoginData({ ...loginData, password: text })}
+              style={styles.input}
+              secureTextEntry
+            />
+            {(error || formError) && (
+              <Text style={[styles.errorText, { marginBottom: 16 }]}>
+                {error || formError}
+              </Text>
+            )}
+            
+            {/* Debug Panel */}
+            {debugLogs.length > 0 && (
+              <View style={styles.debugPanel}>
+                <Text style={styles.debugTitle}>Debug Logs:</Text>
+                {debugLogs.map((log, index) => (
+                  <Text key={index} style={styles.debugText}>{log}</Text>
+                ))}
+              </View>
+            )}
+            
+            <Button mode="contained" onPress={handleLogin} style={styles.modalButton}>
+              Login
+            </Button>
+            <Button 
+              mode="text" 
+              onPress={() => {
+                setShowLoginModal(false);
+                setShowForgotPasswordModal(true);
+              }}
+              style={styles.forgotPasswordButton}
+            >
+              Forgot Password?
+            </Button>
+          </Modal>
+
+          <Modal
+            visible={showRegisterModal}
+            onDismiss={() => {
+              setShowRegisterModal(false);
+              setUserDismissedModal(true);
+            }}
+            contentContainerStyle={styles.modalContainer}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Register</Text>
+              <Button 
+                mode="text" 
+                onPress={() => {
+                  setShowRegisterModal(false);
+                  setUserDismissedModal(true);
+                }}
+                style={styles.closeButton}
+              >
+                ✕
+              </Button>
+            </View>
+            <TextInput
+              label="Name"
+              value={registerData.name}
+              onChangeText={(text) => setRegisterData({ ...registerData, name: text })}
+              style={styles.input}
+            />
+            <TextInput
+              label="Email"
+              value={registerData.email}
+              onChangeText={(text) => setRegisterData({ ...registerData, email: text })}
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TextInput
+              label="Password"
+              value={registerData.password}
+              onChangeText={(text) => setRegisterData({ ...registerData, password: text })}
+              style={styles.input}
+              secureTextEntry
+            />
+            <TextInput
+              label="Confirm Password"
+              value={registerData.confirmPassword}
+              onChangeText={(text) => setRegisterData({ ...registerData, confirmPassword: text })}
+              style={styles.input}
+              secureTextEntry
+            />
+            {(error || formError) && <Text style={styles.errorText}>{error || formError}</Text>}
+            <Button mode="contained" onPress={handleRegister} style={styles.modalButton}>
+              Register
+            </Button>
+          </Modal>
+
+          <Modal
+            visible={showForgotPasswordModal}
+            onDismiss={() => {
+              setShowForgotPasswordModal(false);
+              setResetEmail('');
+              setFormError(null);
+            }}
+            contentContainerStyle={styles.modalContainer}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Reset Password</Text>
+              <Button 
+                mode="text" 
+                onPress={() => {
+                  setShowForgotPasswordModal(false);
+                  setResetEmail('');
+                  setFormError(null);
+                }}
+                style={styles.closeButton}
+              >
+                ✕
+              </Button>
+            </View>
+            <Text style={styles.resetDescription}>
+              Enter your email address and we'll send you a link to reset your password.
+            </Text>
+            <TextInput
+              label="Email"
+              value={resetEmail}
+              onChangeText={setResetEmail}
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            {formError && <Text style={styles.errorText}>{formError}</Text>}
+            <Button mode="contained" onPress={handleForgotPassword} style={styles.modalButton}>
+              Send Reset Link
+            </Button>
+            <Button 
+              mode="text" 
+              onPress={() => {
+                setShowForgotPasswordModal(false);
+                setShowLoginModal(true);
+                setResetEmail('');
+                setFormError(null);
+              }}
+              style={styles.backToLoginButton}
+            >
+              Back to Login
+            </Button>
+          </Modal>
+        </Portal>
+      </View>
+    );
   }
 
   const userRides = rides.filter((ride) => ride.creatorId === currentUser?._id);
@@ -497,7 +709,9 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: 'red',
-    marginBottom: 10,
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
   header: {
     flexDirection: 'row',

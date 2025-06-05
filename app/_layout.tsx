@@ -29,7 +29,7 @@ function RootLayoutNav() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === 'authRoot';
+    const inAuthGroup = segments[0] === 'auth_index';
     const inWelcomeScreen = segments[0] === 'welcome';
     const inResetPasswordScreen = segments[0] === 'resetPassword';
     const inTabsGroup = segments[0] === '(tabs)';

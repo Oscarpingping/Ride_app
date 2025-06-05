@@ -9,7 +9,7 @@ router.post('/login', login);
 router.post('/refresh-token', refreshToken);
 router.post('/logout', logout);
 
-// 密码重置路由
+// 密码重置API路由
 router.post('/request-reset', requestPasswordReset);
 router.post('/reset-password', resetPassword);
 

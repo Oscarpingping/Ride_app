@@ -10,7 +10,7 @@ export default function WelcomeScreen() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace('/home-root');
+      router.replace('/(tabs)/home');
     }
   }, [isAuthenticated, isLoading]);
 
@@ -39,14 +39,14 @@ export default function WelcomeScreen() {
         <Button 
           mode="contained" 
           style={styles.button} 
-          onPress={() => router.push('/authRoot')}
+          onPress={() => router.push('/auth_index')}
         >
           Login
         </Button>
         <Button 
           mode="outlined" 
           style={styles.button} 
-          onPress={() => router.push('/authRoot?register=1')}
+          onPress={() => router.push('/auth_index?register=1')}
         >
           Register
         </Button>

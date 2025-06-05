@@ -66,21 +66,18 @@ export const SYSTEM_CONFIG = {
   PASSWORD_RESET: {
     // 重置服务配置
     SERVICE: {
-      // 重置服务端口（使用3000，与主服务共用端口）
-      PORT: process.env.PASSWORD_RESET_PORT || 3000,
-      
-      // 重置服务基础路径
-      BASE_PATH: '/reset',
+      // 重置服务端口（使用5001，与API服务共用端口）
+      PORT: process.env.PASSWORD_RESET_PORT || 5001,
       
       // 重置成功页面URL
-      SUCCESS_URL: process.env.PASSWORD_RESET_SUCCESS_URL || 'http://localhost:3000/reset-success',
+      SUCCESS_URL: process.env.PASSWORD_RESET_SUCCESS_URL || 'http://localhost:5001/reset-success',
       
       // 重置失败页面URL
-      ERROR_URL: process.env.PASSWORD_RESET_ERROR_URL || 'http://localhost:3000/reset-error'
+      ERROR_URL: process.env.PASSWORD_RESET_ERROR_URL || 'http://localhost:5001/reset-error'
     },
     
     // 重置链接基础URL (指向后端服务器的web页面)
-    BASE_URL: process.env.PASSWORD_RESET_BASE_URL || 'http://localhost:5001/reset/password',
+    BASE_URL: process.env.PASSWORD_RESET_BASE_URL || 'http://localhost:5001/reset-password',
     
     // 重置令牌过期时间（小时）
     EXPIRY_HOURS: 24

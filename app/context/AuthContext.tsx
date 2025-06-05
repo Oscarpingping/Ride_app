@@ -6,7 +6,7 @@ import type { LoginRequest, RegisterRequest } from '../../shared/api/user';
 
 interface AuthContextType extends UserState {
   login: (data: LoginRequest) => Promise<{ success: boolean; error?: string }>;
-  register: (data: RegisterRequest) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
 }
@@ -112,11 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (data: RegisterRequest) => {
+  const register = async (data: RegisterRequest): Promise<{ success: boolean; error?: string }> => {
     try {
-      setState(prev => ({ ...prev, isLoading: true, error: null, currentUser: prev.currentUser ?? null }));
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
       const response = await UserApi.register(data);
-      if (response.success && response.data) {
+      if (response.success && response.data?.user) {
         await AsyncStorage.setItem('token', response.data.token);
         setState({
           currentUser: response.data.user,
@@ -124,21 +124,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
           error: null,
         });
+        return { success: true };
       } else {
-        setState(prev => ({
-          ...prev,
+        const errorMsg = response.error || 'Registration failed';
+        setState({
+          currentUser: null,
+          isAuthenticated: false,
           isLoading: false,
-          error: response.error || 'Registration failed',
-          currentUser: prev.currentUser ?? null,
-        }));
+          error: errorMsg,
+        });
+        return { success: false, error: errorMsg };
       }
     } catch (error) {
-      setState(prev => ({
-        ...prev,
+      const errorMsg = 'An error occurred during registration';
+      setState({
+        currentUser: null,
+        isAuthenticated: false,
         isLoading: false,
-        error: 'An error occurred during registration',
-        currentUser: prev.currentUser ?? null,
-      }));
+        error: errorMsg,
+      });
+      return { success: false, error: errorMsg };
     }
   };
 
