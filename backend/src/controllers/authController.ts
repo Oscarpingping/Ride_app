@@ -10,6 +10,7 @@ import { getResetPasswordFormHtml } from '../utils/views/reset-password/reset-fo
 import { getResetPasswordSuccessHtml } from '../utils/views/reset-password/success';
 import { getResetPasswordErrorHtml } from '../utils/views/reset-password/error';
 import { PASSWORD_RULES } from '../config/passwordValidation';
+import { generateHandle } from '../utils/name_handle';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
@@ -20,15 +21,18 @@ export const register = async (req: Request, res: Response): Promise<Response> =
     const { email, password, name } = req.body;
     console.log(`📝 注册请求: ${email}`);
 
-    // 检查用户是否已存在
+    // 检查邮箱是否已存在
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       console.log(`❌ 用户已存在: ${email}`);
       return res.status(400).json({
         success: false,
-        error: 'User already exists',
+        error: 'Email already registered'
       } as ApiResponse);
     }
+
+    // 生成 name_sid
+    const name_sid = await generateHandle(name);
 
     // 验证密码复杂度
     if (!PASSWORD_RULES.validate(password)) {
@@ -43,6 +47,7 @@ export const register = async (req: Request, res: Response): Promise<Response> =
       email,
       password,
       name,
+      name_sid
     });
 
     await user.save();

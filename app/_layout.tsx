@@ -37,7 +37,7 @@ function RootLayoutNav() {
     if (!isAuthenticated && !inAuthGroup && !inWelcomeScreen && !inResetPasswordScreen) {
       // 未登录且不在认证页面、欢迎页面或密码重置页面，重定向到欢迎页
       router.replace('/welcome');
-    } else if (isAuthenticated && (inAuthGroup || inWelcomeScreen)) {
+    } else if (isAuthenticated && (inAuthGroup || inWelcomeScreen || inResetPasswordScreen)) {
       // 已登录且在认证页面或欢迎页面，重定向到主页
       router.replace('/(tabs)/home');
     }

@@ -34,6 +34,7 @@ export interface IUser extends Document {
   updateClubCreationPermission(): Promise<void>;
   toPublicJSON(): UserType;
   toAuthJSON(): UserType;
+  name_sid: string;
 }
 
 const userSchema = new Schema<IUser>(
@@ -49,6 +50,14 @@ const userSchema = new Schema<IUser>(
       unique: true,
       trim: true,
       lowercase: true,
+    },
+    name_sid: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+      index: true  // 添加索引以提高查询性能
     },
     password: {
       type: String,

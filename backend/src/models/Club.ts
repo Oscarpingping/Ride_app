@@ -42,6 +42,7 @@ export interface IClub extends Document {
     }];
   };
   cardData: any;                  // 俱乐部数据卡片，根据type不同而不同
+  chatRoom: mongoose.Types.ObjectId; // 聊天室引用
   createdAt: Date;
   updatedAt: Date;
 }
@@ -170,6 +171,10 @@ const clubSchema = new Schema<IClub>(
     cardData: {
       type: Schema.Types.Mixed,
       required: true
+    },
+    chatRoom: {
+      type: Schema.Types.ObjectId,
+      ref: 'ChatRoom'
     }
   },
   {

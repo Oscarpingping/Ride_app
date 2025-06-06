@@ -24,4 +24,15 @@ export {
   toUserPublic,
   toSocketUser,
   toAuthUser
-} from './user-unified'; 
+} from './user-unified';
+
+export interface UserType {
+  _id: string;
+  email: string;
+  name_sid: string;
+  name: string;
+  avatar?: string;
+  bio?: string;
+  createdAt: string;
+  updatedAt: string;
+} 
