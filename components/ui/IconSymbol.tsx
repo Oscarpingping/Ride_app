@@ -3,13 +3,21 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { SymbolWeight } from 'expo-symbols';
 import React from 'react';
-import { OpaqueColorValue, StyleProp, ViewStyle } from 'react-native';
+import { OpaqueColorValue, StyleProp, ViewStyle, TextStyle } from 'react-native';
 
 // Add your SFSymbol to MaterialIcons mappings here.
 const MAPPING = {
   // See MaterialIcons here: https://icons.expo.fyi
   // See SF Symbols in the SF Symbols app on Mac.
-  'house.fill': 'home',
+  'house.fill': 'home',                // home tab
+  'home': 'home',                      // 兼容直接用home
+  'message': 'message',                // messages tab
+  'plus.circle.fill': 'add-circle',    // createRide tab
+  'add-circle': 'add-circle',          // 兼容直接用add-circle
+  'person.3.fill': 'groups',           // clubs tab
+  'groups': 'groups',                  // 兼容直接用groups
+  'person.crop.circle': 'person',      // profile tab (未登录)
+  'person': 'person',                  // 兼容直接用person
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
@@ -36,7 +44,7 @@ export function IconSymbol({
   name: IconSymbolName;
   size?: number;
   color: string | OpaqueColorValue;
-  style?: StyleProp<ViewStyle>;
+  style?: StyleProp<TextStyle>;
   weight?: SymbolWeight;
 }) {
   return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;

@@ -1,12 +1,19 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# Dependencies
 node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+web-build/
+*.jsbundle
 
 # Expo
 .expo/
-dist/
-web-build/
 expo-env.d.ts
 
 # Native
@@ -20,87 +27,27 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# debug
+# Debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+logs/
 
 # macOS
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
-
-# typescript
-*.tsbuildinfo
-
-app-example
-
-# OSX
-.DS_Store
-
-# Xcode
-build/
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
-xcuserdata
-*.xccheckout
-*.moved-aside
-DerivedData
-*.hmap
-*.ipa
-*.xcuserstate
-project.xcworkspace
-
-# Android/IntelliJ
-build/
-.idea
-.gradle
-local.properties
-*.iml
-*.hprof
-.cxx/
-*.keystore
-!debug.keystore
-
-# node.js
-node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-
-# Bundle artifacts
-*.jsbundle
-
-# CocoaPods
-/ios/Pods/
-
-# Temporary files created by Metro
-.metro-health-check*
-
-# Expo
-.expo/
-dist/
-web-build/
-
-# Local env files
-.env*.local
-.env
-
-# TypeScript
-*.tsbuildinfo
-
 # Environment variables
 .env
 .env.*
 !.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# TypeScript
+*.tsbuildinfo
 
 # Testing
 coverage/
@@ -110,10 +57,6 @@ coverage/
 .idea/
 *.swp
 *.swo
-
-# Logs
-logs
-*.log
 
 # Runtime data
 pids
@@ -139,12 +82,35 @@ lib-cov
 # Yarn Integrity file
 .yarn-integrity
 
-# Backend
-backend/dist/
-backend/node_modules/
-backend/.env
-backend/.env.*
-!backend/.env.example
+# Xcode
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata
+*.xccheckout
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+*.xcuserstate
+project.xcworkspace
+
+# Android/IntelliJ
+.gradle
+local.properties
+*.iml
+*.hprof
+.cxx/
+*.keystore
+!debug.keystore
+
+# CocoaPods
+/ios/Pods/
 
 # Cursor
 .cursor/

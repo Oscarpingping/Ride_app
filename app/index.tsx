@@ -47,7 +47,7 @@ export default function Index() {
   }
 
   // 非首次访问，根据登录状态导航
-  return <Redirect href={isAuthenticated ? "/(tabs)/home" : "/authRoot"} />;
+  return <Redirect href={isAuthenticated ? "/(tabs)/home" : "/auth_index"} />;
 }
 
 const styles = StyleSheet.create({

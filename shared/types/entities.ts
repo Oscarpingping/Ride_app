@@ -21,9 +21,34 @@ export interface ChatMessage {
   chatId: string;
   sender: User;
   content: string;
-  type: 'text' | 'image' | 'location';
-  metadata?: Record<string, any>;
+  type: 'text' | 'emoji' | 'image' | 'video' | 'file' | 'url';
+  metadata?: {
+    fileName?: string;            // 文件名
+    fileSize?: number;            // 文件大小
+    mimeType?: string;            // 文件类型
+    duration?: number;            // 视频时长
+    thumbnail?: string;           // 缩略图URL
+  };
   isRead: boolean;
+  isEdited: boolean;             // 是否被编辑过
+  isDeleted: boolean;            // 是否被删除
+  editHistory?: Array<{          // 编辑历史
+    content: string;             // 修改前的内容
+    editedAt: Date;              // 修改时间
+    editedBy: string;            // 修改者
+  }>;
+  deletedBy?: string[];          // 谁删除了这条消息
+  deleteReason?: string;         // 删除原因
+  reactions?: Array<{            // 消息反应
+    user: string;                // 用户ID
+    emoji: string;               // 表情
+    createdAt: Date;             // 添加时间
+  }>;
+  mentions?: string[];           // 提及的用户
+  readBy: Array<{               // 已读信息
+    user: string;               // 用户ID
+    readAt: Date;               // 阅读时间
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -75,7 +75,7 @@ export default function AuthScreen() {
           setError(result.error || 'Registration failed, please try again');
           return;
         }
-        router.replace('/(tabs)/home');
+        router.replace('/mainTabs/home');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Operation failed, please try again');

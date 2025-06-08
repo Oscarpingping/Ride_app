@@ -1,16 +1,18 @@
+import { MyClubGrid } from '../../(profile)/MyClubGrid'; 
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { Text, Button, TextInput, Avatar, Portal, Modal, ActivityIndicator, List, Divider, FAB, Surface, HelperText, Chip } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../context/AuthContext';
-import { useRides } from '../context/RideContext';
-import { ClubApi } from '../../shared/api/club';
-import { ContactApi } from '../../shared/api/contact';
-import { UserApi } from '../../shared/api/user';
-import type { User, TerrainType, PaceLevel, DifficultyLevel, UserPreferences } from '../../shared/types/user-unified';
-import { TERRAIN_OPTIONS, PACE_OPTIONS, DIFFICULTY_OPTIONS } from '../../shared/types/user-unified';
-import type { Ride } from '../../shared/types/ride';
-import type { Club } from '../../shared/types/club';
+import { useAuth } from '../../../app/context/AuthContext';
+import { useRides } from '../../../app/context/RideContext';
+import { ClubApi } from '../../../shared/api/club';
+import { ContactApi } from '../../../shared/api/contact';
+import { UserApi } from '../../../shared/api/user';
+import type { User, TerrainType, PaceLevel, DifficultyLevel, UserPreferences } from '../../../shared/types/user-unified';
+import { TERRAIN_OPTIONS, PACE_OPTIONS, DIFFICULTY_OPTIONS } from '../../../shared/types/user-unified';
+import type { Ride } from '../../../shared/types/ride';
+import type { Club } from '../../../shared/types/club';
+
 
 export default function ProfileScreen() {
   const { currentUser, isAuthenticated, isLoading, error, login, register, logout } = useAuth();
@@ -291,6 +293,13 @@ export default function ProfileScreen() {
     }
   };
 
+  const renderClubs = () => (
+    <View style={styles.clubsContainer}>
+      <Text style={styles.sectionTitle}>My Clubs</Text>
+      <MyClubGrid clubs={clubs} onCreateClub={() => router.push('../../../app/(profile)/createClub')} />
+    </View>
+  );
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -505,7 +514,7 @@ export default function ProfileScreen() {
 
   const userRides = rides.filter((ride) => ride.creatorId === currentUser?._id);
   const joinedRides = rides.filter((ride) => 
-    ride.participants.some((participant) => participant.id === currentUser?._id)
+    ride.participants.some((participant: any) => participant.id === currentUser?._id)
   );
 
   const renderActivities = () => (
@@ -566,24 +575,6 @@ export default function ProfileScreen() {
         ))
       ) : (
         <Text style={styles.emptyText}>No contacts yet</Text>
-      )}
-    </View>
-  );
-
-  const renderClubs = () => (
-    <View style={styles.clubsContainer}>
-      <Text style={styles.sectionTitle}>My Clubs</Text>
-      {clubs.length > 0 ? (
-        clubs.map((club) => (
-          <List.Item
-            key={club._id}
-            title={club.name}
-            description={club.description}
-            left={props => <List.Icon {...props} icon="account-group" />}
-          />
-        ))
-      ) : (
-        <Text style={styles.emptyText}>No clubs yet</Text>
       )}
     </View>
   );
@@ -667,11 +658,15 @@ export default function ProfileScreen() {
         </Button>
       </View>
 
-      <ScrollView style={styles.content}>
-        {activeTab === 'activities' && renderActivities()}
-        {activeTab === 'contacts' && renderContacts()}
-        {activeTab === 'clubs' && renderClubs()}
-      </ScrollView>
+      {activeTab === 'activities' && (
+        <ScrollView style={styles.content}>{renderActivities()}</ScrollView>
+      )}
+      {activeTab === 'contacts' && (
+        <ScrollView style={styles.content}>{renderContacts()}</ScrollView>
+      )}
+      {activeTab === 'clubs' && (
+        <ScrollView style={styles.content}>{renderClubs()}</ScrollView>
+      )}
 
       {activeTab === 'contacts' && (
         <FAB

@@ -3,10 +3,10 @@ import { View, StyleSheet, ScrollView, Platform, Alert, KeyboardAvoidingView } f
 import { Button, TextInput, Text, Surface, SegmentedButtons, Chip, Portal, Modal } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import MapView, { Marker } from '../../components/MapView';
-import { RideApi } from '../../shared/api/ride';
-import { useAuth } from '../context/AuthContext';
-
+import { MapView, Marker } from '../../../components/MapView';
+import { RideApi } from '../../../shared/api/ride';
+import { useAuth } from '../../context/AuthContext';
+import { DifficultyLevel, TerrainType } from '../../../shared/types/ride';
 // 为web平台定义MapPressEvent类型
 interface MapPressEvent {
   nativeEvent: {
@@ -16,7 +16,7 @@ interface MapPressEvent {
     };
   };
 }
-import { DifficultyLevel, TerrainType } from '../../types/ride';
+
 
 async function geocodeAddress(address: string) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;

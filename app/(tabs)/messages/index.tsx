@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Text, Avatar, Surface, Divider, ActivityIndicator } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../context/AuthContext';
-import { useMessages } from '../context/MessageContext';
+import { useAuth } from '../../context/AuthContext';
+import { useMessages } from '../../context/MessageContext';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function MessagesScreen() {

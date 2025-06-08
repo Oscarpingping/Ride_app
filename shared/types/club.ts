@@ -1,3 +1,5 @@
+import { ChatMessage } from './entities';
+
 export type ClubType = 'biking' | 'climbing' | 'hiking' | 'skiing' | 'surfing' | 'running' | 'camping';
 
 export interface ClubLocation {
@@ -34,28 +36,6 @@ export interface JoinRequestHistory extends JoinRequest {
     avatar?: string;
   };
   handledAt: string;
-}
-
-export interface ChatMessage {
-  sender: string;                 // 发送者的 name_sid
-  type: 'text' | 'emoji' | 'image' | 'video' | 'file' | 'location';
-  content: string;                // 消息内容
-  metadata?: {                    // 媒体文件的元数据
-    fileName?: string;            // 文件名
-    fileSize?: number;            // 文件大小
-    mimeType?: string;            // 文件类型
-    duration?: number;            // 视频时长
-    thumbnail?: string;           // 缩略图URL
-    location?: {                  // 位置信息
-      latitude: number;
-      longitude: number;
-      address?: string;
-    };
-  };
-  createdAt: string;             // 发送时间
-  updatedAt: string;             // 最后编辑时间
-  isEdited: boolean;             // 是否被编辑过
-  isDeleted: boolean;            // 是否被删除
 }
 
 export interface ChatRoom {

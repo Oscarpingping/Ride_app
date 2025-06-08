@@ -57,7 +57,7 @@ export interface UpdateRideRequest extends Partial<CreateRideRequest> {}
 export interface SendMessageRequest {
   conversationId: string;
   content: string;
-  type: 'text' | 'image' | 'location';
+  type: 'text' | 'image' | 'url';
   metadata?: Record<string, any>;
 }
 

@@ -17,12 +17,13 @@ import {
   Appbar,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { MapView, Marker } from '../../components/MapView';
-import { Ride, TerrainType, PaceLevel, DifficultyLevel } from '../../types/ride';
-import { FilterState, defaultFilterState } from '../types/filters';
-import { useRides } from '../context/RideContext';
-import { RideCard } from '../components/RideCard';
-import { useClubs } from '../context/ClubContext';
+import { MapView, Marker } from '../../../components/MapView';
+import { Ride } from '../../../shared/types/ride';
+import { TerrainType, PaceLevel, DifficultyLevel } from '../../../shared/types/common';
+import { FilterState, defaultFilterState } from '../../../shared/types/filters';
+import { useRides } from '../../context/RideContext';
+import { RideCard } from '../../components/RideCard';
+import { useClubs } from '../../context/ClubContext';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -60,7 +61,7 @@ export default function HomeScreen() {
       }
 
       // Distance filter
-      if (ride.route.distance > filters.maxDistance) {
+      if (ride.route.distance > filters.distance.max || ride.route.distance < filters.distance.min) {
         return false;
       }
 
@@ -101,8 +102,8 @@ export default function HomeScreen() {
             : b.route.distance - a.route.distance;
         case 'rating':
           return filters.sortOrder === 'asc'
-            ? (a.organizer?.rating || 0) - (b.organizer?.rating || 0)
-            : (b.organizer?.rating || 0) - (a.organizer?.rating || 0);
+            ? (a.creator?.rating || 0) - (b.creator?.rating || 0)
+            : (b.creator?.rating || 0) - (a.creator?.rating || 0);
         default:
           return 0;
       }
@@ -111,9 +112,9 @@ export default function HomeScreen() {
 
   const renderRideCard = (ride: Ride) => (
     <RideCard
-      key={ride.id}
+      key={ride._id}
       ride={ride}
-      onPress={() => router.push(`/ride/${ride.id}`)}
+      onPress={() => router.push(`/ride/${ride._id}`)}
     />
   );
 
@@ -148,11 +149,11 @@ export default function HomeScreen() {
           >
             {filteredRides.map((ride) => (
               <Marker
-                key={ride.id}
+                key={ride._id}
                 coordinate={ride.meetingPoint}
                 title={ride.title}
                 description={`${ride.route.distance}km • ${ride.pace}`}
-                onPress={() => router.push(`/ride/${ride.id}`)}
+                onPress={() => router.push(`/ride/${ride._id}`)}
               />
             ))}
           </MapView>
@@ -209,16 +210,22 @@ export default function HomeScreen() {
             <View style={styles.rangeContainer}>
               <TextInput
                 label="Min"
-                value={filters.minDistance.toString()}
-                onChangeText={(value) => setFilters({ ...filters, minDistance: parseInt(value) || 0 })}
+                value={filters.distance.min.toString()}
+                onChangeText={(value) => setFilters({
+                  ...filters,
+                  distance: { ...filters.distance, min: parseInt(value) || 0 }
+                })}
                 keyboardType="numeric"
                 style={styles.rangeInput}
               />
               <Text>-</Text>
               <TextInput
                 label="Max"
-                value={filters.maxDistance.toString()}
-                onChangeText={(value) => setFilters({ ...filters, maxDistance: parseInt(value) || 0 })}
+                value={filters.distance.max.toString()}
+                onChangeText={(value) => setFilters({
+                  ...filters,
+                  distance: { ...filters.distance, max: parseInt(value) || 0 }
+                })}
                 keyboardType="numeric"
                 style={styles.rangeInput}
               />
@@ -228,16 +235,22 @@ export default function HomeScreen() {
             <View style={styles.rangeContainer}>
               <TextInput
                 label="Min"
-                value={filters.minElevation.toString()}
-                onChangeText={(value) => setFilters({ ...filters, minElevation: parseInt(value) || 0 })}
+                value={filters.elevation.min.toString()}
+                onChangeText={(value) => setFilters({
+                  ...filters,
+                  elevation: { ...filters.elevation, min: parseInt(value) || 0 }
+                })}
                 keyboardType="numeric"
                 style={styles.rangeInput}
               />
               <Text>-</Text>
               <TextInput
                 label="Max"
-                value={filters.maxElevation.toString()}
-                onChangeText={(value) => setFilters({ ...filters, maxElevation: parseInt(value) || 0 })}
+                value={filters.elevation.max.toString()}
+                onChangeText={(value) => setFilters({
+                  ...filters,
+                  elevation: { ...filters.elevation, max: parseInt(value) || 0 }
+                })}
                 keyboardType="numeric"
                 style={styles.rangeInput}
               />

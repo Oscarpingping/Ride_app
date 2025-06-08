@@ -168,3 +168,51 @@ Firebase (可能用于实时功能)
 - 新建: `app/(tabs)/profile.tsx`
 - 新建: `app/(tabs)/clubs.tsx`
 - 更新: `README.md`
+
+# 数据模型管理规范
+
+## 使用 Prisma 的条件
+- 变更频率 > 2次/周
+- 需要复杂查询
+- 涉及全栈类型安全
+
+## 保持 Mongoose 的条件
+- 变更频率 < 1次/月  
+- 简单 CRUD 操作
+- 历史代码依赖性强
+
+## 性能对比示例
+const benchmark = async () => {
+  // Prisma 查询
+  const prismaStart = Date.now()
+  await prisma.ride.findMany()
+  const prismaTime = Date.now() - prismaStart
+
+  // Mongoose 查询
+  const mongooseStart = Date.now()
+  await RideModel.find()
+  const mongooseTime = Date.now() - mongooseStart
+
+  console.table([
+    { ORM: 'Prisma', Time: `${prismaTime}ms` },
+    { ORM: 'Mongoose', Time: `${mongooseTime}ms` }
+  ])
+}
+
+graph TD
+    A[数据模型] --> B{变更频率}
+    B -->|高频变更| C[Ride - Prisma]
+    B -->|低频变更| D[User/Club - Mongoose]
+    C --> E[优势: 快速迭代/类型安全]
+    D --> F[优势: 稳定/减少迁移成本]
+
+# 1. 安装依赖
+npm install prisma @prisma/client
+
+# 2. 初始化 Prisma
+npx prisma init --datasource-provider mongodb
+
+# 3. 配置.env
+echo 'DATABASE_URL="mongodb://your-mongo-uri"' >> .env
+
+npx prisma generate

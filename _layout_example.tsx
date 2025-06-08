@@ -42,15 +42,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: '',
+          title: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="clubs"
+        name="messages"
         options={{
-          title: '',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.3.fill" color={color} />,
+          title: 'Messages',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="message" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -61,16 +61,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="messages"
+        name="clubs"
         options={{
-          title: '',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="message" color={color} />,
+          title: 'Clubs',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.3.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: '',
+          title: 'Profile',
           tabBarIcon: () => <ProfileTabIcon />,
         }}
       />
