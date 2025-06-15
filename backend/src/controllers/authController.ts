@@ -82,21 +82,21 @@ export const register = async (req: Request, res: Response): Promise<Response> =
 // 用户登录控制器
 export const login = async (req: Request, res: Response): Promise<Response> => {
   try {
-    // 记录请求头信息
-    console.log(`[${new Date().toISOString()}] 🔍 登录请求详情:
+    // 注释掉调试日志
+    /*console.log(`[${new Date().toISOString()}] 🔍 登录请求详情:
       Headers: ${JSON.stringify(req.headers, null, 2)}
       Body: ${JSON.stringify(req.body, null, 2)}
       URL: ${req.originalUrl}
       Method: ${req.method}
-    `);
+    `);*/
 
     const { email, password } = req.body;
-    console.log(`[${new Date().toISOString()}] 用户登录请求: ${email}`);
+    //console.log(`[${new Date().toISOString()}] 用户登录请求: ${email}`);
 
     // 查找用户
     const user = await User.findOne({ email });
     if (!user) {
-      console.log(`[${new Date().toISOString()}] 登录失败: 用户 ${email} 不存在`);
+      //console.log(`[${new Date().toISOString()}] 登录失败: 用户 ${email} 不存在`);
       return res.status(401).json({
         success: false,
         error: 'Invalid email or password',
@@ -106,7 +106,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     // 验证密码
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      console.log(`[${new Date().toISOString()}] 登录失败: 密码不匹配 ${email}`);
+      //console.log(`[${new Date().toISOString()}] 登录失败: 密码不匹配 ${email}`);
       return res.status(401).json({
         success: false,
         error: 'Invalid email or password',
@@ -117,7 +117,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
     const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
-    console.log(`[${new Date().toISOString()}] 用户登录成功: ${email}`);
+    //console.log(`[${new Date().toISOString()}] 用户登录成功: ${email}`);
     return res.status(200).json({
       success: true,
       data: {
@@ -141,13 +141,13 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       },
     } as ApiResponse);
   } catch (error) {
-    // 详细记录错误信息
-    console.error(`[${new Date().toISOString()}] 登录失败:`, {
+    // 注释掉详细错误日志
+    /*console.error(`[${new Date().toISOString()}] 登录失败:`, {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       requestBody: req.body,
       headers: req.headers
-    });
+    });*/
     return res.status(500).json({
       success: false,
       error: 'Login failed, please try again later',

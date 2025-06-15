@@ -1,54 +1,46 @@
-import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
 import { User } from '../models/User';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
-// 扩展 Request 类型
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        _id: string;
-        email: string;
-        userId?: string; // 兼容旧代码
-      };
+      user?: any;
     }
   }
 }
 
-export const auth = async (req: Request, res: Response, next: NextFunction) => {
+export const auth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    // console.log('\n=== AUTH MIDDLEWARE DEBUG ===');
+    // console.log('Time:', new Date().toISOString());
+    // console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    // console.log('URL:', req.originalUrl);
+    // console.log('Method:', req.method);
+
     const token = req.header('Authorization')?.replace('Bearer ', '');
+    // console.log('🔑 Token:', token?.substring(0, 20) + '...');
 
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: '请先登录',
-      });
+      throw new Error('No token provided');
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+    // console.log('📝 Decoded token:', decoded);
+
     const user = await User.findById(decoded.userId);
-
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: '用户不存在',
-      });
+      throw new Error('User not found');
     }
 
-    req.user = {
-      _id: user._id.toString(),
-      email: user.email,
-      userId: user._id.toString(), // 兼容旧代码
-    };
-
-    return next();
+    // console.log('✅ User authenticated:', user._id);
+    req.user = { userId: user._id };
+    next();
   } catch (error) {
-    return res.status(401).json({
+    // console.error(`[${new Date().toISOString()}] Auth middleware error:`, error);
+    res.status(401).json({
       success: false,
-      error: '认证失败，请重新登录',
+      error: 'Authentication failed'
     });
   }
 }; 

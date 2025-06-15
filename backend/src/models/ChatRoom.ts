@@ -6,47 +6,47 @@ const MESSAGE_EDIT_WINDOW = 5 * 60 * 1000; // 5分钟，单位：毫秒
 export interface IChatRoom extends Document {
   club: mongoose.Types.ObjectId;    // 关联的俱乐部
   messages: Array<{
-    sender: string;                 // 发送者的 name_sid
-    type: 'text' | 'emoji' | 'image' | 'video' | 'file' | 'url';  // 改为 url 类型
-    content: string;                // 消息内容
-    metadata?: {                    // 媒体文件的元数据
-      fileName?: string;            // 文件名
-      fileSize?: number;            // 文件大小
-      mimeType?: string;            // 文件类型
-      duration?: number;            // 视频时长
-      thumbnail?: string;           // 缩略图URL
+    senderNameSid: string;          // 发送者的 name_sid
+    type: 'text' | 'emoji' | 'image' | 'video' | 'file' | 'url';
+    content: string;
+    metadata?: {
+      fileName?: string;
+      fileSize?: number;
+      mimeType?: string;
+      duration?: number;
+      thumbnail?: string;
     };
-    createdAt: Date;               // 发送时间
-    updatedAt: Date;               // 最后编辑时间
-    isEdited: boolean;             // 是否被编辑过
-    isDeleted: boolean;            // 是否被删除
-    editHistory?: Array<{          // 编辑历史
-      content: string;             // 修改前的内容
-      editedAt: Date;              // 修改时间
-      editedBy: string;            // 修改者
+    createdAt: Date;
+    updatedAt: Date;
+    isEdited: boolean;
+    isDeleted: boolean;
+    editHistory?: Array<{
+      content: string;
+      editedAt: Date;
+      editedBy: string;            // 编辑者的 name_sid
     }>;
-    deletedBy?: string[];          // 谁删除了这条消息
-    deleteReason?: string;         // 删除原因
-    reactions?: Array<{            // 消息反应
-      user: string;                // 用户ID
-      emoji: string;               // 表情
-      createdAt: Date;             // 添加时间
+    deletedBy?: string[];          // 删除者的 name_sid 数组
+    deleteReason?: string;
+    reactions?: Array<{
+      user: string;                // 用户的 name_sid
+      emoji: string;
+      createdAt: Date;
     }>;
-    mentions?: string[];           // 提及的用户
-    readBy: Array<{               // 已读信息
-      user: string;               // 用户ID
-      readAt: Date;               // 阅读时间
+    mentions?: string[];           // 被提及用户的 name_sid 数组
+    readBy: Array<{
+      user: string;               // 用户的 name_sid
+      readAt: Date;
     }>;
-    canEdit: boolean;             // 是否可以编辑
-    canDelete: boolean;           // 是否可以删除
+    canEdit: boolean;
+    canDelete: boolean;
   }>;
-  lastMessage: {                    // 最后一条消息
-    sender: string;                 // 发送者
-    content: string;                // 内容预览
-    type: string;                   // 消息类型
-    timestamp: Date;                // 发送时间
+  lastMessage: {
+    senderNameSid: string;        // 发送者的 name_sid
+    content: string;
+    type: string;
+    timestamp: Date;
   };
-  pinnedMessages?: string[];        // 置顶消息ID列表
+  pinnedMessages?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,14 +60,14 @@ const chatRoomSchema = new Schema<IChatRoom>(
       unique: true
     },
     messages: [{
-      sender: {
+      senderNameSid: {
         type: String,
         required: true,
         index: true
       },
       type: {
         type: String,
-        enum: ['text', 'emoji', 'image', 'video', 'file', 'url'],  // 改为 url 类型
+        enum: ['text', 'emoji', 'image', 'video', 'file', 'url'],
         required: true
       },
       content: {
@@ -130,7 +130,7 @@ const chatRoomSchema = new Schema<IChatRoom>(
       }
     }],
     lastMessage: {
-      sender: String,
+      senderNameSid: String,
       content: String,
       type: String,
       timestamp: Date
@@ -144,7 +144,7 @@ const chatRoomSchema = new Schema<IChatRoom>(
 
 // 创建索引
 chatRoomSchema.index({ club: 1 });
-chatRoomSchema.index({ 'messages.sender': 1 });
+chatRoomSchema.index({ 'messages.senderNameSid': 1 });
 chatRoomSchema.index({ 'messages.createdAt': -1 });
 chatRoomSchema.index({ 'messages.type': 1 });
 chatRoomSchema.index({ 'messages.mentions': 1 });
@@ -156,7 +156,7 @@ chatRoomSchema.pre('save', function(next) {
   if (this.messages.length > 0) {
     const lastMsg = this.messages[this.messages.length - 1];
     this.lastMessage = {
-      sender: lastMsg.sender,
+      senderNameSid: lastMsg.senderNameSid,
       content: lastMsg.content,
       type: lastMsg.type,
       timestamp: lastMsg.createdAt
@@ -166,7 +166,7 @@ chatRoomSchema.pre('save', function(next) {
 });
 
 // 检查消息是否可以编辑或删除
-chatRoomSchema.methods.checkMessagePermissions = function(messageId: string, userId: string) {
+chatRoomSchema.methods.checkMessagePermissions = function(messageId: string, userSid: string) {
   const message = this.messages.id(messageId);
   if (!message) return { canEdit: false, canDelete: false };
 
@@ -174,7 +174,7 @@ chatRoomSchema.methods.checkMessagePermissions = function(messageId: string, use
   const messageAge = now.getTime() - message.createdAt.getTime();
   
   // 只有发送者且在时间窗口内可以编辑或删除
-  const isSender = message.sender === userId;
+  const isSender = message.senderNameSid === userSid;
   const isWithinTimeWindow = messageAge <= MESSAGE_EDIT_WINDOW;
   
   message.canEdit = isSender && isWithinTimeWindow;

@@ -40,35 +40,35 @@ export default function TabLayout() {
         }),
       }}>
       <Tabs.Screen
-        name="home"
+        name="home/index"
         options={{
           title: '',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="clubs"
+        name="clubs/index"
         options={{
           title: '',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.3.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="createRide"
+        name="createRide/index"
         options={{
           title: '',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="plus.circle.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="messages"
+        name="messages/index"
         options={{
           title: '',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="message" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="profile/index"
         options={{
           title: '',
           tabBarIcon: () => <ProfileTabIcon />,

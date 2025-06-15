@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import type { Club, ClubType } from '../../shared/types/club';
-import { ClubApi } from '../../shared/api/club';
+import { clubApi } from '../../shared/api/club';
 
 interface ClubContextType {
   clubs: Club[];
   loading: boolean;
   error: string | null;
   getClubs: () => Promise<void>;
+  getUserClubs: () => Promise<void>;
   getClub: (id: string) => Promise<Club | null>;
   createClub: (club: Omit<Club, '_id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateClub: (id: string, club: Partial<Club>) => Promise<void>;
@@ -38,7 +39,7 @@ export function ClubProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       setError(null);
-      const response = await ClubApi.getClubs();
+      const response = await clubApi.getClubs();
       if (response.success && response.data) {
         setClubs(response.data);
       } else {
@@ -46,6 +47,23 @@ export function ClubProvider({ children }: { children: ReactNode }) {
       }
     } catch (err) {
       setError('Failed to fetch clubs');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getUserClubs = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await clubApi.getUserClubs();
+      if (response.success && response.data) {
+        setClubs(response.data);
+      } else {
+        setError(response.error || 'Failed to fetch user clubs');
+      }
+    } catch (err) {
+      setError('Failed to fetch user clubs');
     } finally {
       setLoading(false);
     }
@@ -69,7 +87,7 @@ export function ClubProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       setError(null);
-      const response = await ClubApi.createClub({
+      const response = await clubApi.createClub({
         name: club.name,
         description: club.description,
         contactEmail: '', // TODO: Add contact email to the form
@@ -115,7 +133,7 @@ export function ClubProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       setError(null);
-      const response = await ClubApi.joinClub(id);
+      const response = await clubApi.joinClub(id);
       if (response.success && response.data) {
         setClubs(prev => prev.map(club => 
           club._id === id ? response.data! : club
@@ -202,6 +220,7 @@ export function ClubProvider({ children }: { children: ReactNode }) {
         loading,
         error,
         getClubs,
+        getUserClubs,
         getClub,
         createClub,
         updateClub,

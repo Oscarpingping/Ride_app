@@ -1,23 +1,26 @@
 import { getApiBaseUrl, buildApiUrl, API_ENDPOINTS } from '../../shared/config/api';
-
-// 存储认证token
-let token: string | null = null;
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 设置认证token
-export const setAuthToken = (authToken: string | null) => {
-  token = authToken;
+export const setAuthToken = async (authToken: string | null) => {
+  if (authToken) {
+    await AsyncStorage.setItem('token', authToken);
+  } else {
+    await AsyncStorage.removeItem('token');
+  }
 };
 
 // 获取认证token
-export const getAuthToken = () => token;
+export const getAuthToken = async () => {
+  return await AsyncStorage.getItem('token');
+};
 
-// 添加请求日志函数
+// 记录请求日志
 const logRequest = (method: string, url: string, data?: any) => {
-  const timestamp = new Date().toISOString();
-  console.log(`\n[${timestamp}] 📤 发送请求:
+  console.log(`[${new Date().toISOString()}] 📤 发送请求:
     Method: ${method}
     URL: ${url}
-    ${data ? `Data: ${JSON.stringify(data, null, 2)}` : ''}
+    Data: ${JSON.stringify(data, null, 2)}
   `);
 };
 
@@ -33,13 +36,23 @@ const request = async <T>(
   logRequest(method, url, data);
 
   try {
+    const headers: Record<string, string> = {};
+    
+    // 只有在不是 FormData 时才设置 Content-Type
+    if (!(data instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
+    // 添加认证头
+    const token = await getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(url, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: data ? JSON.stringify(data) : undefined,
+      headers,
+      body: data instanceof FormData ? data : (data ? JSON.stringify(data) : undefined),
     });
 
     // 记录响应日志
@@ -53,10 +66,10 @@ const request = async <T>(
     }
 
     return await response.json();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`[${new Date().toISOString()}] ❌ 请求失败:
       URL: ${url}
-      Error: ${error.message}
+      Error: ${error instanceof Error ? error.message : 'Unknown error'}
     `);
     throw error;
   }
@@ -98,7 +111,7 @@ export const rideAPI = {
 };
 
 // 俱乐部相关API
-export const clubAPI = {
+export const clubApi = {
   getClubs: () => request(API_ENDPOINTS.CLUBS.BASE),
   createClub: (clubData: any) => request(API_ENDPOINTS.CLUBS.CREATE, 'POST', clubData),
   joinClub: (id: string) => request(API_ENDPOINTS.CLUBS.JOIN(id), 'POST'),

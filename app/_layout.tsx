@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { MessageProvider } from './context/MessageContext';
 import { RideProvider } from './context/RideContext';
 import { ClubProvider } from './context/ClubContext';
+import { ClubModalProvider } from './context/ClubModalContext';
 
 // 自定义主题
 const theme = {
@@ -57,7 +58,9 @@ export default function RootLayout() {
           <RideProvider>
             <ClubProvider>
               <MessageProvider>
-                <RootLayoutNav />
+                <ClubModalProvider>
+                  <RootLayoutNav />
+                </ClubModalProvider>
               </MessageProvider>
             </ClubProvider>
           </RideProvider>

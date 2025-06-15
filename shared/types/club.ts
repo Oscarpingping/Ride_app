@@ -4,23 +4,18 @@ export type ClubType = 'biking' | 'climbing' | 'hiking' | 'skiing' | 'surfing' |
 
 export interface ClubLocation {
   city: string;
-  province: string;
   country: string;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
 }
 
 export interface ClubStats {
   memberCount: number;
-  activityCount: number;
+  activityCount?: number;
 }
 
 export interface JoinRequest {
   user: {
-    _id: string;
-    name: string;
+    userId: string;
+    name_sid: string;
     avatar?: string;
   };
   message?: string;
@@ -31,8 +26,8 @@ export interface JoinRequestHistory extends JoinRequest {
   status: 'approved' | 'rejected';
   response?: string;
   handledBy: {
-    _id: string;
-    name: string;
+    userId: string;
+    name_sid: string;
     avatar?: string;
   };
   handledAt: string;
@@ -54,41 +49,89 @@ export interface ChatRoom {
 
 export interface Club {
   _id: string;
+  clubId: string;                // 俱乐部唯一标识符
   name: string;
-  description: string;
+  description?: string;
   logo?: string;
   coverImage?: string;
   type: ClubType;
   founder: {
-    _id: string;
-    name: string;
+    userId: string;
+    name_sid: string;
     avatar?: string;
   };
   admins: Array<{
-    _id: string;
-    name: string;
+    userId: string;
+    name_sid: string;
     avatar?: string;
   }>;
   members: Array<{
-    _id: string;
-    name: string;
+    userId: string;
+    name_sid: string;
     avatar?: string;
   }>;
-  location: ClubLocation;
+  location?: ClubLocation;
   stats: ClubStats;
-  rules: string[];
-  tags: string[];
+  rules?: string[];
+  tags?: string[];
   isPrivate: boolean;
-  joinRequests: {
+  joinRequests?: {
     pending: JoinRequest[];
     history: JoinRequestHistory[];
   };
-  chatRoom?: ChatRoom;           // 聊天室信息
-  recentActivities: Array<{
-    _id: string;
-    title: string;
-    date: string;
-  }>;
+  cardData?: string;
+  chatRoom?: ChatRoom;
+  contactEmail: string;
   createdAt: string;
   updatedAt: string;
-} 
+}
+
+// API 请求和响应类型
+export interface CreateClubRequest {
+  name: string;
+  description?: string;
+  type: ClubType;
+  location?: ClubLocation;
+  isPrivate: boolean;
+  tags?: string[];
+  rules?: string[];
+  contactEmail: string;
+  logo?: File;
+  coverImage?: File;
+}
+
+export interface UpdateClubRequest {
+  name: string;
+  description: string;
+  type: ClubType;
+  location: ClubLocation;
+  isPrivate: boolean;
+  tags?: string[];
+  rules?: string[];
+  contactEmail: string;
+  logo?: File;
+  coverImage?: File;
+}
+
+export interface JoinClubRequest {
+  message?: string;
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+export type ClubResponse = ApiResponse<Club>;
+export type ClubListResponse = ApiResponse<Club[]>;
+export type ClubMemberResponse = ApiResponse<Array<{
+  userId: string;
+  name_sid: string;
+  avatar?: string;
+}>>;
+export type ClubAdminResponse = ApiResponse<Array<{
+  userId: string;
+  name_sid: string;
+  avatar?: string;
+}>>; 

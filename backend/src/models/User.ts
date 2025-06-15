@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { CLUB_CREATION_PERMISSION } from '../config/constants';
+//import { CLUB_CREATION_PERMISSION } from '../config/constants';
 
 // 导入统一的类型定义
 import { User as UserType, EmergencyContact, UserPreferences } from '../../../shared/types/user-unified';
@@ -8,6 +8,7 @@ import { User as UserType, EmergencyContact, UserPreferences } from '../../../sh
 // 后端用户接口，继承统一定义并添加Document和方法
 export interface IUser extends Document {
   name: string;
+  name_sid: string;  // Unique identifier for user's name, used for @mentions and display
   email: string;
   password: string;
   avatar?: string;
@@ -34,7 +35,6 @@ export interface IUser extends Document {
   updateClubCreationPermission(): Promise<void>;
   toPublicJSON(): UserType;
   toAuthJSON(): UserType;
-  name_sid: string;
 }
 
 const userSchema = new Schema<IUser>(
@@ -44,13 +44,6 @@ const userSchema = new Schema<IUser>(
       required: true,
       trim: true,
     },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      lowercase: true,
-    },
     name_sid: {
       type: String,
       required: true,
@@ -58,6 +51,13 @@ const userSchema = new Schema<IUser>(
       trim: true,
       lowercase: true,
       index: true  // 添加索引以提高查询性能
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
     },
     password: {
       type: String,
@@ -167,7 +167,7 @@ userSchema.methods.comparePassword = async function (candidatePassword: string):
 };
 
 // 更新俱乐部创建权限的方法
-userSchema.methods.updateClubCreationPermission = function(): void {
+/*userSchema.methods.updateClubCreationPermission = function(): void {
   const rating = this.rating || 0;
   const ridesJoined = this.ridesJoined || 0;
   const ridesCreated = this.ridesCreated || 0;
@@ -186,7 +186,7 @@ userSchema.methods.updateClubCreationPermission = function(): void {
 
   // 使用配置的阈值更新权限
   this.canCreateClub = score >= CLUB_CREATION_PERMISSION.THRESHOLD;
-};
+};*/
 
 // 转换为前端类型的方法
 userSchema.methods.toJSON = function (): UserType {
@@ -213,7 +213,7 @@ userSchema.methods.toJSON = function (): UserType {
       joinedAt: clubRef.joinedAt
     }));
   }
-  if (userObject.createdClubs) {  // 新增：转换创建的俱乐部ID
+  if (userObject.createdClubs) {
     userObject.createdClubs = userObject.createdClubs.map((id: mongoose.Types.ObjectId) => id.toString());
   }
   
@@ -245,7 +245,7 @@ userSchema.methods.toPublicJSON = function(): UserType {
       joinedAt: clubRef.joinedAt
     }));
   }
-  if (userObject.createdClubs) {  // 新增：转换创建的俱乐部ID
+  if (userObject.createdClubs) {
     userObject.createdClubs = userObject.createdClubs.map((id: mongoose.Types.ObjectId) => id.toString());
   }
   
@@ -277,7 +277,7 @@ userSchema.methods.toAuthJSON = function(): UserType {
       joinedAt: clubRef.joinedAt
     }));
   }
-  if (userObject.createdClubs) {  // 新增：转换创建的俱乐部ID
+  if (userObject.createdClubs) {
     userObject.createdClubs = userObject.createdClubs.map((id: mongoose.Types.ObjectId) => id.toString());
   }
   

@@ -5,7 +5,7 @@ import { Text, Button, TextInput, Avatar, Portal, Modal, ActivityIndicator, List
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../../app/context/AuthContext';
 import { useRides } from '../../../app/context/RideContext';
-import { ClubApi } from '../../../shared/api/club';
+import { clubApi } from '../../../shared/api/club';
 import { ContactApi } from '../../../shared/api/contact';
 import { UserApi } from '../../../shared/api/user';
 import type { User, TerrainType, PaceLevel, DifficultyLevel, UserPreferences } from '../../../shared/types/user-unified';
@@ -22,8 +22,6 @@ export default function ProfileScreen() {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [showAddContactModal, setShowAddContactModal] = useState(false);
-  const [showCreateClubModal, setShowCreateClubModal] = useState(false);
-  const [showJoinClubModal, setShowJoinClubModal] = useState(false);
   const [userDismissedModal, setUserDismissedModal] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
@@ -34,11 +32,6 @@ export default function ProfileScreen() {
   });
   const [resetEmail, setResetEmail] = useState('');
   const [contactEmail, setContactEmail] = useState('');
-  const [clubData, setClubData] = useState({
-    name: '',
-    contactEmail: '',
-    description: '',
-  });
   const [formError, setFormError] = useState<string | null>(null);
   const [contacts, setContacts] = useState<User[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -208,9 +201,15 @@ export default function ProfileScreen() {
   };
 
   const fetchClubs = async () => {
-    const response = await ClubApi.getClubs();
-    if (response.success && response.data) {
-      setClubs(response.data);
+    try {
+      const response = await clubApi.getUserClubs();
+      if (response.success && response.data) {
+        setClubs(response.data);
+      } else {
+        console.error('Failed to fetch clubs:', response.error);
+      }
+    } catch (error) {
+      console.error('Error fetching clubs:', error);
     }
   };
 
@@ -236,32 +235,6 @@ export default function ProfileScreen() {
       fetchContacts();
     } else {
       setFormError(response.error || 'Failed to remove contact');
-    }
-  };
-
-  const handleCreateClub = async () => {
-    if (!validateEmail(clubData.contactEmail)) {
-      setFormError('Please enter a valid contact email');
-      return;
-    }
-    const response = await ClubApi.createClub(clubData);
-    if (response.success) {
-      setShowCreateClubModal(false);
-      setClubData({ name: '', contactEmail: '', description: '' });
-      setFormError(null);
-      fetchClubs();
-    } else {
-      setFormError(response.error || 'Failed to create club');
-    }
-  };
-
-  const handleJoinClub = async (clubId: string) => {
-    const response = await ClubApi.joinClub(clubId);
-    if (response.success) {
-      setShowJoinClubModal(false);
-      fetchClubs();
-    } else {
-      setFormError(response.error || 'Failed to join club');
     }
   };
 
@@ -295,8 +268,10 @@ export default function ProfileScreen() {
 
   const renderClubs = () => (
     <View style={styles.clubsContainer}>
-      <Text style={styles.sectionTitle}>My Clubs</Text>
-      <MyClubGrid clubs={clubs} onCreateClub={() => router.push('../../../app/(profile)/createClub')} />
+      <MyClubGrid 
+        clubs={clubs} 
+        onCreateClub={() => router.push('/(profile)/createClub')} 
+      />
     </View>
   );
 
@@ -676,21 +651,6 @@ export default function ProfileScreen() {
         />
       )}
 
-      {activeTab === 'clubs' && (
-        <View style={styles.clubFabContainer}>
-          <FAB
-            icon="plus"
-            style={styles.fab}
-            onPress={() => setShowCreateClubModal(true)}
-          />
-          <FAB
-            icon="account-group-plus"
-            style={[styles.fab, styles.joinClubFab]}
-            onPress={() => setShowJoinClubModal(true)}
-          />
-        </View>
-      )}
-
       <Portal>
         <Modal
           visible={showAddContactModal}
@@ -717,77 +677,6 @@ export default function ProfileScreen() {
                 <Button mode="contained" onPress={handleAddContact} style={styles.modalButton}>
                   Add Contact
                 </Button>
-              </Surface>
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </Modal>
-
-        <Modal
-          visible={showCreateClubModal}
-          onDismiss={() => setShowCreateClubModal(false)}
-          contentContainerStyle={styles.modalContainer}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.keyboardAvoidingView}
-          >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-              <Surface style={styles.surface}>
-                <Text style={styles.modalTitle}>Create Club</Text>
-                <TextInput
-                  label="Club Name"
-                  value={clubData.name}
-                  onChangeText={(text) => setClubData({ ...clubData, name: text })}
-                  style={styles.input}
-                  mode="outlined"
-                />
-                <TextInput
-                  label="Contact Email"
-                  value={clubData.contactEmail}
-                  onChangeText={(text) => setClubData({ ...clubData, contactEmail: text })}
-                  style={styles.input}
-                  mode="outlined"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                <TextInput
-                  label="Description"
-                  value={clubData.description}
-                  onChangeText={(text) => setClubData({ ...clubData, description: text })}
-                  style={styles.input}
-                  mode="outlined"
-                  multiline
-                  numberOfLines={4}
-                />
-                {formError && <HelperText type="error" visible={true}>{formError}</HelperText>}
-                <Button mode="contained" onPress={handleCreateClub} style={styles.modalButton}>
-                  Create Club
-                </Button>
-              </Surface>
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </Modal>
-
-        <Modal
-          visible={showJoinClubModal}
-          onDismiss={() => setShowJoinClubModal(false)}
-          contentContainerStyle={styles.modalContainer}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.keyboardAvoidingView}
-          >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-              <Surface style={styles.surface}>
-                <Text style={styles.modalTitle}>Join Club</Text>
-                {clubs.map((club) => (
-                  <List.Item
-                    key={club._id}
-                    title={club.name}
-                    description={club.description}
-                    onPress={() => handleJoinClub(club._id)}
-                  />
-                ))}
               </Surface>
             </ScrollView>
           </KeyboardAvoidingView>

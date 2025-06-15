@@ -23,6 +23,7 @@ export const DIFFICULTY_OPTIONS: DifficultyLevel[] = ['Beginner', 'Intermediate'
 export interface BaseUser {
   _id: string;
   name: string;
+  name_sid: string;    // Unique identifier for user's name, used for @mentions and display
   email: string;
   avatar?: string;
   createdAt: Date;
@@ -52,6 +53,7 @@ export interface User extends BaseUser {
 export interface UserSummary {
   _id: string;
   name: string;
+  name_sid: string;    // Unique identifier for user's name
   avatar?: string;
   rating?: number;
 }
@@ -71,6 +73,7 @@ export interface UserPublic extends BaseUser {
 export interface SocketUser {
   _id: string;
   name: string;
+  name_sid: string;    // Unique identifier for user's name
   avatar?: string;
   status?: UserStatus;
   lastSeen?: Date;
@@ -108,6 +111,7 @@ export interface AuthUser {
   _id: string;
   email: string;
   name: string;
+  name_sid: string;    // Unique identifier for user's name
   avatar?: string;
   canCreateClub: boolean;       // 用户创建俱乐部的权限
   rating?: number;
@@ -149,6 +153,7 @@ export function toUserSummary(user: User | BaseUser): UserSummary {
   return {
     _id: user._id,
     name: user.name,
+    name_sid: user.name_sid,
     avatar: user.avatar,
     rating: 'rating' in user ? user.rating : undefined
   };
@@ -163,6 +168,7 @@ export function toSocketUser(user: User | BaseUser, status: UserStatus = UserSta
   return {
     _id: user._id,
     name: user.name,
+    name_sid: user.name_sid,
     avatar: user.avatar,
     status,
     lastSeen: new Date()
@@ -174,6 +180,7 @@ export function toAuthUser(user: User): AuthUser {
     _id: user._id,
     email: user.email,
     name: user.name,
+    name_sid: user.name_sid,
     avatar: user.avatar,
     canCreateClub: user.canCreateClub,
     rating: user.rating,

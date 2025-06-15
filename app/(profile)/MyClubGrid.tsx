@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Text } from 'react-native-paper';
 import type { Club } from '../../shared/types/club';
 import { MiniClubCard } from '../components/MiniClubCard';
+import { ClubModals } from '../components/club/ClubModals';
+import { useClubModal } from '../context/ClubModalContext';
 
 const CARD_MARGIN = 8;
 const CARD_WIDTH = (Dimensions.get('window').width - CARD_MARGIN * 3) / 2;
@@ -14,6 +16,9 @@ interface MyClubGridProps {
 }
 
 export const MyClubGrid: React.FC<MyClubGridProps> = ({ clubs, onCreateClub }) => {
+  const { openModal } = useClubModal();
+  const [selectedClub, setSelectedClub] = useState<Club | null>(null);
+
   // 插入加号卡片
   const data = clubs.slice();
   if (data.length % 4 !== 3) {
@@ -26,22 +31,55 @@ export const MyClubGrid: React.FC<MyClubGridProps> = ({ clubs, onCreateClub }) =
     rows.push(data.slice(i, i + 2));
   }
 
+  const handleClubPress = (club: Club) => {
+    setSelectedClub(club);
+    // TODO: 添加导航到俱乐部详情页的逻辑
+  };
+
+  const handleUpdateCover = () => {
+    if (selectedClub) {
+      openModal('UPDATE_COVER', { clubId: selectedClub._id });
+    }
+  };
+
+  const handleUpdateLogo = () => {
+    if (selectedClub) {
+      openModal('UPDATE_LOGO', { clubId: selectedClub._id });
+    }
+  };
+
   return (
     <View style={styles.container}>
       {rows.map((row, rowIndex) => (
         <View key={rowIndex} style={styles.row}>
           {row.map((item: any) =>
             item.isAdd ? (
-              <TouchableOpacity key={item._id} style={styles.addCard} onPress={onCreateClub} activeOpacity={0.8}>
+              <TouchableOpacity 
+                key={item._id} 
+                style={styles.addCard} 
+                onPress={onCreateClub} 
+                activeOpacity={0.8}
+              >
                 <Text style={styles.plus}>+</Text>
                 <Text style={styles.addText}>Create Club</Text>
               </TouchableOpacity>
             ) : (
-              <MiniClubCard key={item._id} club={item} onPress={() => {}} />
+              <MiniClubCard 
+                key={item._id} 
+                club={item} 
+                onPress={() => handleClubPress(item)}
+              />
             )
           )}
         </View>
       ))}
+      
+      <ClubModals 
+        visible={!!selectedClub}
+        type={null}
+        clubId={selectedClub?._id}
+        onDismiss={() => setSelectedClub(null)}
+      />
     </View>
   );
 };

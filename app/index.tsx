@@ -5,6 +5,8 @@ import { Redirect, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './context/AuthContext';
 
+
+fetch('${API_BASE_URL}/test').then(res => console.log(res)).catch(err => console.log(err));
 const FIRST_VISIT_KEY = '@WildPals:firstVisit';
 
 export default function Index() {

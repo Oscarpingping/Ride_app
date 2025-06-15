@@ -14,28 +14,35 @@ export function ClubCard({ club, onPress }: ClubCardProps) {
       <View style={styles.clubHeader}>
         <View style={styles.clubHeaderText}>
           <Text variant="titleMedium" style={styles.clubTitle}>{club.name}</Text>
-          <Text variant="bodyMedium" style={styles.clubDescription} numberOfLines={2}>
-            {club.description}
-          </Text>
+          {club.description && (
+            <Text variant="bodyMedium" style={styles.clubDescription} numberOfLines={2}>
+              {club.description}
+            </Text>
+          )}
         </View>
       </View>
 
       <View style={styles.clubStats}>
         <View style={styles.stat}>
-          <Text variant="titleMedium">{club.memberCount}</Text>
+          <Text variant="titleMedium">{club.stats.memberCount}</Text>
           <Text variant="bodySmall">Members</Text>
         </View>
-        <View style={styles.stat}>
-          <Text variant="titleMedium">{club.activityCount}</Text>
-          <Text variant="bodySmall">Activities</Text>
-        </View>
+        {club.stats.activityCount !== undefined && (
+          <View style={styles.stat}>
+            <Text variant="titleMedium">{club.stats.activityCount}</Text>
+            <Text variant="bodySmall">Activities</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.clubFooter}>
         <View style={styles.founder}>
-          <Avatar.Text size={36} label={club.founder.name.split(' ').map(n => n[0]).join('')} />
+          <Avatar.Text size={36} label={club.founder.name_sid.split(' ').map(n => n[0]).join('')} />
           <View style={styles.founderInfo}>
-            <Text variant="bodyMedium">Founded by {club.founder.name}</Text>
+            <Avatar.Text size={36} label={club.founder.name_sid.split(' ').map(n => n[0]).join('')} />
+            <View style={styles.founderText}>
+              <Text variant="bodyMedium">Founded by {club.founder.name_sid}</Text>
+            </View>
           </View>
         </View>
         <Button 
@@ -87,6 +94,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   founderInfo: {
+    flex: 1,
+  },
+  founderText: {
     flex: 1,
   },
 }); 
