@@ -9,7 +9,7 @@ import { getResetPasswordEmailContent, getPasswordChangedEmailContent } from '..
 import { getResetPasswordFormHtml } from '../utils/views/reset-password/reset-form';
 import { getResetPasswordSuccessHtml } from '../utils/views/reset-password/success';
 import { getResetPasswordErrorHtml } from '../utils/views/reset-password/error';
-import { PASSWORD_RULES } from '../config/passwordValidation';
+//import { PASSWORD_RULES } from '../config/passwordValidation';
 import { generateHandle } from '../utils/name_handle';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -34,13 +34,13 @@ export const register = async (req: Request, res: Response): Promise<Response> =
     // 生成 name_sid
     const name_sid = await generateHandle(name);
 
-    // 验证密码复杂度
-    if (!PASSWORD_RULES.validate(password)) {
-      return res.status(400).json({
-        success: false,
-        error: PASSWORD_RULES.ERROR_MESSAGE,
-      } as ApiResponse);
-    }
+    // TODO: 密码复杂度验证已暂时禁用，未来可以根据需求重新启用。
+    // if (!PASSWORD_RULES.validate(password)) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: PASSWORD_RULES.ERROR_MESSAGE,
+    //   } as ApiResponse);
+    // }
 
     // 创建新用户
     const user = new User({
@@ -294,21 +294,21 @@ export const resetPassword = async (req: Request, res: Response) => {
       } as ApiResponse);
     }
 
-    console.log(`🔄 更新密码: ${user.email}`);
+    console.log(`✅ 找到有效的重置令牌`);
 
-    // 验证密码复杂度
-    if (!PASSWORD_RULES.validate(password)) {
-      return res.status(400).json({
-        success: false,
-        error: PASSWORD_RULES.ERROR_MESSAGE,
-      } as ApiResponse);
-    }
+    // 验证新密码的复杂度
+    // TODO: 密码复杂度验证已暂时禁用，未来可以根据需求重新启用。
+    // if (!PASSWORD_RULES.validate(password)) {
+    //   console.log(`❌ 新密码不符合复杂度要求`);
+    //   const errorHtml = getResetPasswordErrorHtml('Password does not meet complexity requirements.');
+    //   return res.status(400).send(errorHtml);
+    // }
 
     // 更新密码
-    user.password = password; // 让 User 模型的中间件处理加密
+    user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
-    await user.save(); // 这会触发 pre('save') 中间件
+    await user.save();
 
     // 发送确认邮件
     const emailContent = getPasswordChangedEmailContent(user.email);

@@ -32,11 +32,11 @@ router.post('/:id/leave', rideController.leaveRide as RequestHandler);
 // 获取当前用户发起的活动
 router.get('/created', async (req: AuthRequest, res) => {
   console.log('req.user in /created:', req.user);
-  if (!req.user || !req.user.userId) {
+  if (!req.user || !req.user._id) {
     return res.status(401).json({ message: '未认证用户' });
   }
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const rides = await require('../models/Ride').Ride.find({ organizer: userId });
     return res.json(Array.isArray(rides) ? rides : []);
   } catch (err) {
@@ -47,11 +47,11 @@ router.get('/created', async (req: AuthRequest, res) => {
 // 获取当前用户参与的活动
 router.get('/participated', async (req: AuthRequest, res) => {
   console.log('req.user in /participated:', req.user);
-  if (!req.user || !req.user.userId) {
+  if (!req.user || !req.user._id) {
     return res.status(401).json({ message: '未认证用户' });
   }
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const rides = await require('../models/Ride').Ride.find({ participants: userId });
     return res.json(Array.isArray(rides) ? rides : []);
   } catch (err) {

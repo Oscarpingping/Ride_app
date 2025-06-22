@@ -3,7 +3,7 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      // Optimize imports
+      // Optimize imports for Expo's built-in environment variables
       [
         'transform-inline-environment-variables',
         {
@@ -12,6 +12,15 @@ module.exports = function (api) {
       ],
       // Enable React Native web support
       'react-native-reanimated/plugin',
+      // Plugin for custom environment variables from .env file (暂时注释，排查问题)
+      // ["module:react-native-dotenv", {
+      //   "envName": "APP_ENV",
+      //   "moduleName": "@env",
+      //   "path": ".env",
+      //   "safe": false,
+      //   "allowUndefined": true,
+      //   "verbose": false
+      // }]
     ],
     env: {
       production: {

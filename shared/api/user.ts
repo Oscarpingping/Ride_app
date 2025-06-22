@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '../types/user-unified';
 import { ApiResponse } from './types';
 import { buildApiUrl, API_ENDPOINTS, HTTP_CONFIG } from '../config/api';
+import { request } from '../../app/services/api';
 
 export interface LoginRequest {
   email: string;
@@ -116,6 +117,9 @@ export interface UserApiInterface {
   
   // 更新用户信息
   updateUser(data: Partial<User>): Promise<ApiResponse<User>>;
+
+  // 搜索用户
+  searchUsers(search: string): Promise<User[]>;
 }
 
 // 用户API实现
@@ -171,4 +175,15 @@ export const UserApi: UserApiInterface = {
       body: JSON.stringify(data),
     });
   },
+
+  // 搜索用户
+  async searchUsers(search: string): Promise<User[]> {
+    const response = await request<{ success: boolean; data: User[] }>(
+      `/api/users?search=${encodeURIComponent(search)}`
+    );
+    if (response.success) {
+      return response.data;
+    }
+    throw new Error('User search failed');
+  }
 }; 

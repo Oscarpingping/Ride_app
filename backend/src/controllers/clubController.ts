@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Club } from '../models/Club';
 import { ChatRoom } from '../models/ChatRoom';
+import { User } from '../models/User';
 //import { IUser } from '../models/User';
 import { uploadImage } from '../services/uploadService';
 import mongoose from 'mongoose';
@@ -94,7 +95,8 @@ export const createClub = async (req: Request, res: Response): Promise<Response>
       isPrivate,
       tags,
       rules,
-      contactEmail
+      contactEmail,
+      createChatRoom = false // 默认不创建聊天室
     } = req.body;
 
     // 验证必填字段
@@ -105,7 +107,7 @@ export const createClub = async (req: Request, res: Response): Promise<Response>
       } as ApiResponse);
     }
 
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -113,9 +115,25 @@ export const createClub = async (req: Request, res: Response): Promise<Response>
       } as ApiResponse);
     }
 
+    // 检查用户是否有创建俱乐部的权限
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      } as ApiResponse);
+    }
+
+    if (!user.canCreateClub) {
+      return res.status(403).json({
+        success: false,
+        error: 'You do not have permission to create clubs. Please contact an administrator or meet the requirements.'
+      } as ApiResponse);
+    }
+
     // 生成 clubId
-    const baseName = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-    const randomStr = Math.random().toString(36).substring(2, 8);
+    const baseName = name.toLowerCase().replace(/[^a-z0-9]/g, ''); // 去除非英文和数字字符
+    const randomStr = Math.random().toString(36).substring(2, 5); // 3个随机英文和数字字符
     const clubId = `${baseName}-${randomStr}`;
 
     // 创建俱乐部
@@ -138,19 +156,45 @@ export const createClub = async (req: Request, res: Response): Promise<Response>
       }
     });
 
-    // 创建聊天室
-    const chatRoom = new ChatRoom({
-      name: `${name} Chat`,
-      type: 'club',
-      club: club._id,
-      members: [userId]
-    });
+    // 根据选项决定是否创建聊天室
+    if (createChatRoom) {
+      // 创建聊天室
+      const chatRoom = new ChatRoom({
+        name: `${name} Chat`,
+        type: 'club',
+        club: club._id,
+        members: [userId]
+      });
 
-    // 保存聊天室
-    await chatRoom.save();
+      // 保存聊天室
+      await chatRoom.save();
 
-    // 更新俱乐部的聊天室引用
-    club.chatRoom = chatRoom._id;
+      // 更新俱乐部的聊天室引用
+      club.chatRoom = chatRoom._id;
+    }
+
+    // 处理图片上传
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    if (files) {
+      if (files.logo?.[0]) {
+        const logoPath = await uploadImage(files.logo[0], {
+          subDir: `club/${clubId}`,
+          width: 800,
+          height: 800,
+          fit: 'inside'
+        });
+        club.logo = logoPath;
+      }
+      if (files.coverImage?.[0]) {
+        const coverPath = await uploadImage(files.coverImage[0], {
+          subDir: `club/${clubId}`,
+          width: 1200,
+          height: 600,
+          fit: 'inside'
+        });
+        club.coverImage = coverPath;
+      }
+    }
 
     // 保存俱乐部
     await club.save();
@@ -196,11 +240,10 @@ export const getClubs = async (req: Request, res: Response): Promise<Response> =
 // 获取俱乐部详情
 export const getClub = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const club = await Club.findOne({ clubId: req.params.clubId })
-      .populate('founder', 'name avatar')
-      .populate('members', 'name avatar')
-      .populate('admins', 'name avatar')
-      .populate('chatRoom');
+    const club = await Club.findById(req.params.id)
+      .populate('founder', '_id name name_sid avatar')
+      .populate('admins', '_id name name_sid avatar')
+      .populate('members', '_id name name_sid avatar');
     
     if (!club) {
       return res.status(404).json({
@@ -208,7 +251,7 @@ export const getClub = async (req: Request, res: Response): Promise<Response> =>
         error: 'Club not found'
       } as ApiResponse);
     }
-
+    
     return res.json({
       success: true,
       data: club
@@ -218,12 +261,84 @@ export const getClub = async (req: Request, res: Response): Promise<Response> =>
   }
 };
 
-export const addAdmin = async (req: Request, res: Response): Promise<Response> => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
+// 添加成员
+export const addMember = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const club = await Club.findOne({ clubId: req.params.clubId });
+    const { userId } = req.body;
+    const club = await Club.findById(req.params.id);
+
+    if (!club) {
+      return res.status(404).json({ success: false, error: 'Club not found' });
+    }
+    
+    // 查找用户是否存在
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    const isMember = club.members.some(memberId => memberId.toString() === userId);
+    if (isMember) {
+      return res.status(400).json({ success: false, error: 'User is already a member' });
+    }
+
+    club.members.push(user._id);
+    club.stats.memberCount = club.members.length;
+    await club.save();
+    
+    const updatedClub = await Club.findById(req.params.id)
+        .populate('founder', 'name avatar')
+        .populate('admins', 'name avatar')
+        .populate('members', 'name avatar');
+
+    return res.json({ success: true, data: updatedClub });
+  } catch (error) {
+    return handleError(error, res, 'Add member');
+  }
+};
+
+// 移除成员
+export const removeMember = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { userId } = req.body;
+    const club = await Club.findById(req.params.id);
+
+    if (!club) {
+      return res.status(404).json({ success: false, error: 'Club not found' });
+    }
+    
+    // 正确的检查方式
+    const isMember = club.members.some(memberId => memberId && memberId.toString() === userId);
+    if (!isMember) {
+      return res.status(400).json({ success: false, error: 'User is not a member' });
+    }
+
+    // 不能移除创始人
+    if (club.founder.toString() === userId) {
+        return res.status(400).json({ success: false, error: 'Cannot remove the founder' });
+    }
+
+    club.members = club.members.filter(memberId => memberId && memberId.toString() !== userId);
+    // 如果被移除的成员是管理员，也从管理员列表中移除
+    club.admins = club.admins.filter(adminId => adminId && adminId.toString() !== userId);
+    club.stats.memberCount = club.members.length;
+    
+    await club.save();
+    
+    const updatedClub = await Club.findById(req.params.id)
+        .populate('founder', 'name avatar')
+        .populate('admins', 'name avatar')
+        .populate('members', 'name avatar');
+
+    return res.json({ success: true, data: updatedClub });
+  } catch (error) {
+    return handleError(error, res, 'Remove member');
+  }
+};
+
+export const addAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const club = await Club.findById(req.params.id);
     
     if (!club) {
       return res.status(404).json({
@@ -232,7 +347,7 @@ export const addAdmin = async (req: Request, res: Response): Promise<Response> =
       } as ApiResponse);
     }
     
-    if (club.founder.toString() !== req.user?.userId) {
+    if (club.founder.toString() !== req.user?._id.toString()) {
       return res.status(403).json({
         success: false,
         error: 'Only founder can add admins'
@@ -240,52 +355,57 @@ export const addAdmin = async (req: Request, res: Response): Promise<Response> =
     }
     
     const { userId } = req.body;
-    if (!club.members.includes(userId)) {
+    
+    // 查找用户是否存在
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    
+    // Correctly check if user is a member
+    if (!club.members.some(m => m && m.toString() === userId)) {
       return res.status(400).json({
         success: false,
         error: 'User must be a member first'
       } as ApiResponse);
     }
     
-    if (club.admins.includes(userId)) {
+    // Correctly check if user is already an admin
+    if (club.admins.some(a => a && a.toString() === userId)) {
       return res.status(400).json({
         success: false,
         error: 'User is already an admin'
       } as ApiResponse);
     }
     
-    club.admins.push(userId);
-    await club.save({ session });
+    club.admins.push(user._id);
+    await club.save();
     
-    await session.commitTransaction();
     return res.json({
       success: true,
       data: club
     } as ApiResponse);
   } catch (error: any) {
-    await session.abortTransaction();
     return handleError(error, res, 'Add admin');
-  } finally {
-    session.endSession();
   }
 };
 
 export const requestJoinClub = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const club = await Club.findOne({ clubId: req.params.clubId });
+    const club = await Club.findById(req.params.id);
     
     if (!club) {
       return res.status(404).json({ success: false, error: 'Club not found' });
     }
     
-    if (club.members.includes(req.user.userId)) {
+    if (club.members.some(m => m && m.toString() === req.user._id.toString())) {
       return res.status(400).json({ success: false, error: 'Already a member' });
     }
     
     const { message } = req.body;
     
     club.joinRequests.pending.push({
-      user: req.user.userId,
+      user: req.user._id,
       message,
       createdAt: new Date()
     });
@@ -297,23 +417,13 @@ export const requestJoinClub = async (req: Request, res: Response): Promise<Resp
   }
 };
 
-export const handleJoinRequest = async (req: Request, res: Response): Promise<Response> => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
+export const handleJoinRequest = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
-    const { clubId, requestId } = req.params;
-    const { status, response } = req.body;
-    const adminId = req.user?.userId;
-
-    if (!adminId) {
-      return res.status(401).json({
-        success: false,
-        error: 'Unauthorized'
-      } as ApiResponse);
-    }
-
-    const club = await Club.findById(clubId);
+    const club = await Club.findById(req.params.id);
+    
     if (!club) {
       return res.status(404).json({
         success: false,
@@ -321,51 +431,48 @@ export const handleJoinRequest = async (req: Request, res: Response): Promise<Re
       } as ApiResponse);
     }
 
-    // 初始化 joinRequests 如果不存在
-    if (!club.joinRequests) {
-      club.joinRequests = {
-        pending: [],
-        history: []
-      };
-    }
+    const { requestId, action, response: responseMessage } = req.body;
 
-    const request = club.joinRequests.pending.find(r => r.user.toString() === requestId);
-    if (!request) {
+    // 查找待处理的请求
+    const pendingRequestIndex = club.joinRequests.pending.findIndex(
+      (request: any) => request._id?.toString() === requestId
+    );
+
+    if (pendingRequestIndex === -1) {
       return res.status(404).json({
         success: false,
         error: 'Join request not found'
       } as ApiResponse);
     }
 
-    // 更新请求状态
-    club.joinRequests.pending = club.joinRequests.pending.filter(r => r.user.toString() !== requestId);
-    club.joinRequests.history.push({
-      user: request.user,
-      status,
-      message: request.message,
-      response,
-      handledBy: adminId,
-      createdAt: request.createdAt,
-      handledAt: new Date()
-    });
+    const [handledRequest] = club.joinRequests.pending.splice(pendingRequestIndex, 1);
 
-    if (status === 'approved') {
-      club.members.push(request.user);
-      club.stats.memberCount = (club.stats.memberCount || 0) + 1;
+    if (action === 'approve') {
+      // 检查是否已经是成员或管理员
+      if (!club.members.some(m => m && m.toString() === handledRequest.user.toString())) {
+        club.members.push(handledRequest.user as mongoose.Types.ObjectId);
+        club.stats.memberCount += 1;
+      }
     }
 
-    await club.save({ session });
-    await session.commitTransaction();
+    club.joinRequests.history.push({
+      user: handledRequest.user,
+      message: handledRequest.message,
+      createdAt: handledRequest.createdAt,
+      status: action,
+      response: responseMessage,
+      handledBy: req.user._id,
+      handledAt: new Date(),
+    });
+
+    await club.save();
 
     return res.json({
       success: true,
       data: club
     } as ApiResponse);
   } catch (error: any) {
-    await session.abortTransaction();
     return handleError(error, res, 'Handle join request');
-  } finally {
-    session.endSession();
   }
 };
 
@@ -399,8 +506,14 @@ export const getJoinRequests = async (req: Request, res: Response): Promise<Resp
 };
 
 export const updateClub = async (req: Request, res: Response): Promise<Response> => {
+  // 调试日志，输出前端请求信息
+  console.log('[updateClub] method:', req.method);
+  console.log('[updateClub] url:', req.url);
+  console.log('[updateClub] headers:', req.headers);
+  console.log('[updateClub] body:', req.body);
+  console.log('[updateClub] files:', req.files);
   try {
-    const { clubId } = req.params;
+    const { id } = req.params;
     const {
       name,
       description,
@@ -412,7 +525,7 @@ export const updateClub = async (req: Request, res: Response): Promise<Response>
       contactEmail
     } = req.body;
 
-    const club = await Club.findOne({ clubId });
+    const club = await Club.findById(id);
     if (!club) {
       return res.status(404).json({
         success: false,
@@ -421,7 +534,8 @@ export const updateClub = async (req: Request, res: Response): Promise<Response>
     }
 
     // 检查权限
-    if (club.founder.toString() !== req.user?.userId && !club.admins.includes(req.user?.userId)) {
+    const isAdmin = club.admins.some(adminId => adminId && adminId.toString() === req.user?._id.toString());
+    if (club.founder.toString() !== req.user?._id.toString() && !isAdmin) {
       return res.status(403).json({
         success: false,
         error: 'Only founder and admins can update club'
@@ -432,11 +546,21 @@ export const updateClub = async (req: Request, res: Response): Promise<Response>
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     if (files) {
       if (files.logo?.[0]) {
-        const logoPath = await uploadImage(files.logo[0], clubId);
+        const logoPath = await uploadImage(files.logo[0], {
+          subDir: `club/${club.clubId}`,
+          width: 800,
+          height: 800,
+          fit: 'inside'
+        });
         club.logo = logoPath;
       }
       if (files.coverImage?.[0]) {
-        const coverPath = await uploadImage(files.coverImage[0], clubId);
+        const coverPath = await uploadImage(files.coverImage[0], {
+          subDir: `club/${club.clubId}`,
+          width: 1200,
+          height: 600,
+          fit: 'inside'
+        });
         club.coverImage = coverPath;
       }
     }
@@ -468,7 +592,7 @@ export const deleteClub = async (req: Request, res: Response): Promise<Response>
   session.startTransaction();
 
   try {
-    const club = await Club.findById(req.params.clubId);
+    const club = await Club.findById(req.params.id);
 
     if (!club) {
       return res.status(404).json({ 
@@ -477,7 +601,7 @@ export const deleteClub = async (req: Request, res: Response): Promise<Response>
     }
 
     // 检查权限
-    if (club.founder.toString() !== req.user?.userId) {
+    if (club.founder.toString() !== req.user?._id.toString()) {
       return res.status(403).json({ 
         message: 'Not authorized to delete club' 
       });
@@ -507,7 +631,7 @@ export const deleteClub = async (req: Request, res: Response): Promise<Response>
       await ChatRoom.findByIdAndDelete(club.chatRoom, { session });
     }
 
-    await Club.findByIdAndDelete(req.params.clubId, { session });
+    await Club.findByIdAndDelete(req.params.id, { session });
     await session.commitTransaction();
     return res.json({
       success: true,
@@ -553,11 +677,9 @@ export const getClubMembers = async (req: Request, res: Response): Promise<Respo
 
 // 移除管理员
 export const removeAdmin = async (req: Request, res: Response): Promise<Response> => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
-    const club = await Club.findOne({ clubId: req.params.clubId });
+    const { userId } = req.body;
+    const club = await Club.findById(req.params.id);
     
     if (!club) {
       return res.status(404).json({
@@ -565,35 +687,48 @@ export const removeAdmin = async (req: Request, res: Response): Promise<Response
         error: 'Club not found'
       } as ApiResponse);
     }
-    
-    if (club.founder.toString() !== req.user?.userId) {
+
+    // 检查权限：只有创始人才能移除管理员
+    if (club.founder.toString() !== req.user?._id.toString()) {
       return res.status(403).json({
         success: false,
         error: 'Only founder can remove admins'
       } as ApiResponse);
     }
     
-    const { userId } = req.body;
-    if (!club.admins.includes(userId)) {
+    // 不能移除创始人自己
+    if (club.founder.toString() === userId) {
       return res.status(400).json({
         success: false,
-        error: 'User is not an admin'
+        error: 'Cannot remove the founder'
       } as ApiResponse);
     }
+
+    const initialAdminCount = club.admins.length;
+    club.admins = club.admins.filter(id => id && id.toString() !== userId);
     
-    club.admins = club.admins.filter(id => id.toString() !== userId);
-    await club.save({ session });
+    if (club.admins.length === initialAdminCount) {
+      return res.status(404).json({
+        success: false,
+        error: 'Admin not found in club'
+      } as ApiResponse);
+    }
+
+    await club.save();
     
-    await session.commitTransaction();
+    // 重新获取并填充数据以返回最新状态
+    const updatedClub = await Club.findById(req.params.id)
+      .populate('founder', '_id name name_sid avatar')
+      .populate('admins', '_id name name_sid avatar')
+      .populate('members', '_id name name_sid avatar');
+      
     return res.json({
       success: true,
-      data: club
+      data: updatedClub
     } as ApiResponse);
+
   } catch (error: any) {
-    await session.abortTransaction();
     return handleError(error, res, 'Remove admin');
-  } finally {
-    session.endSession();
   }
 };
 
@@ -631,7 +766,7 @@ export const getClubAdmins = async (req: Request, res: Response): Promise<Respon
 // 获取用户已加入的俱乐部
 export const getUserClubs = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
     if (!userId) {
       return res.status(401).json({
         success: false,

@@ -1,0 +1,142 @@
+import React, { useState } from 'react';
+import { View, StyleSheet, Image } from 'react-native';
+import { Button, Text } from 'react-native-paper';
+import { ImageService, ImageType } from '../../services/imageService';
+import { User, Club } from '../../../shared/types/entities';
+
+interface ImageUploaderProps {
+  type: ImageType;
+  _id?: string;  // 使用 _id 替代 clubId
+  currentImage?: string;
+  aspect?: [number, number];
+  onUploadStart?: () => void;
+  onUploadComplete?: (imageUrl: string) => void;
+  onUploadError?: (error: string) => void;
+  style?: any;
+}
+
+export const ImageUploader: React.FC<ImageUploaderProps> = ({
+  type,
+  _id,
+  currentImage,
+  aspect = [1, 1],
+  onUploadStart,
+  onUploadComplete,
+  onUploadError,
+  style,
+}) => {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleImagePick = async () => {
+    try {
+      const image = await ImageService.pickImage({ aspect });
+      if (image) {
+        setSelectedImage(image.uri);
+        setError(null);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to pick image';
+      setError(errorMessage);
+      onUploadError?.(errorMessage);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedImage) return;
+    setUploading(true);
+    setError(null);
+    onUploadStart?.();
+    try {
+      // 压缩图片
+      const compressedUri = await ImageService.compressImage(selectedImage);
+      let url = '';
+      if (type === 'avatar') {
+        url = await ImageService.uploadAvatar(compressedUri);
+      } else if (type === 'club-logo' && _id) {
+        url = await ImageService.uploadClubLogo(compressedUri, _id);
+      } else if (type === 'club-cover' && _id) {
+        url = await ImageService.uploadClubCover(compressedUri, _id);
+      } else {
+        throw new Error('Invalid upload type or missing _id');
+      }
+      onUploadComplete?.(url);
+      setSelectedImage(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+      setError(errorMessage);
+      onUploadError?.(errorMessage);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const displayImage = selectedImage || currentImage;
+
+  return (
+    <View style={[styles.container, style]}>
+      <View style={[styles.imageContainer, { aspectRatio: aspect[0] / aspect[1] }]}>
+        {displayImage ? (
+          <Image source={{ uri: displayImage }} style={styles.image} />
+        ) : (
+          <View style={styles.placeholder} />
+        )}
+      </View>
+      
+      <Button
+        mode="contained"
+        onPress={handleImagePick}
+        style={styles.button}
+        disabled={uploading}
+      >
+        {displayImage ? 'Change Image' : 'Select Image'}
+      </Button>
+
+      {selectedImage && (
+        <Button
+          mode="contained"
+          onPress={handleUpload}
+          loading={uploading}
+          disabled={uploading}
+          style={styles.button}
+        >
+          Upload
+        </Button>
+      )}
+
+      {error && (
+        <Text style={styles.error}>{error}</Text>
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+  },
+  imageContainer: {
+    width: '100%',
+    marginBottom: 16,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#e0e0e0',
+  },
+  button: {
+    marginTop: 8,
+    width: '100%',
+  },
+  error: {
+    color: 'red',
+    marginTop: 8,
+  },
+}); 

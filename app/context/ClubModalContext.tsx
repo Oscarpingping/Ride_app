@@ -5,7 +5,8 @@ export type ClubModalType =
   | 'UPDATE_LOGO'
   | 'MANAGE_ADMINS'
   | 'MANAGE_MEMBERS'
-  | 'HANDLE_JOIN_REQUESTS';
+  | 'HANDLE_JOIN_REQUESTS'
+  | 'EDIT_INFO';
 
 interface ClubModalContextType {
   modalType: ClubModalType | null;

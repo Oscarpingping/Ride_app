@@ -23,6 +23,12 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));  // 增加请求体大小限制
 //app.use(requestLogger);
 
+// 全局请求日志
+app.use((req, _res, next) => {
+  console.log('[GLOBAL] method:', req.method, 'url:', req.url, 'content-type:', req.headers['content-type']);
+  next();
+});
+
 // 健康检查路由
 app.get('/health', (req, res) => {
   console.log(`[${new Date().toISOString()}] 🏥 健康检查请求:

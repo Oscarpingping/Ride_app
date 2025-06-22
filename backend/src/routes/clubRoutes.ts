@@ -10,6 +10,8 @@ import {
   requestJoinClub,
   handleJoinRequest,
   getClubMembers,
+  addMember,
+  removeMember,
   addAdmin,
   removeAdmin,
   getClubAdmins,
@@ -24,21 +26,23 @@ const router = express.Router();
 router.post('/', auth, validateClub, createClub);
 router.get('/', auth, getClubs);
 router.get('/user', auth, getUserClubs);
-router.get('/:clubId', auth, getClub);
-router.put('/:clubId', auth, upload.fields([
+router.get('/:id', auth, getClub);
+router.put('/:id', auth, upload.fields([
   { name: 'logo', maxCount: 1 },
   { name: 'coverImage', maxCount: 1 }
 ]) as unknown as express.RequestHandler, multerErrorHandler, updateClub);
-router.delete('/:clubId', auth, deleteClub);
+router.delete('/:id', auth, deleteClub);
 
 // 成员管理
-router.post('/:clubId/join-requests', auth, requestJoinClub);
-router.post('/:clubId/join-requests/:requestId', auth, handleJoinRequest);
-router.get('/:clubId/members', auth, getClubMembers);
+router.post('/:id/join-requests', auth, requestJoinClub);
+router.post('/:id/join-requests/:requestId', auth, handleJoinRequest);
+router.get('/:id/members', auth, getClubMembers);
+router.post('/:id/members/add', auth, addMember);
+router.post('/:id/members/remove', auth, removeMember);
 
 // 管理员管理
-router.post('/:clubId/admins/add', auth, addAdmin);
-router.post('/:clubId/admins/remove', auth, removeAdmin);
-router.get('/:clubId/admins', auth, getClubAdmins);
+router.post('/:id/admins/add', auth, addAdmin);
+router.post('/:id/admins/remove', auth, removeAdmin);
+router.get('/:id/admins', auth, getClubAdmins);
 
 export default router; 

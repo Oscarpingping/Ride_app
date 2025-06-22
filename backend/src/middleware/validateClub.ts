@@ -13,7 +13,8 @@ export const validateClub = (req: Request, res: Response, next: NextFunction): v
     isPrivate: Joi.boolean().required(),
     tags: Joi.array().items(Joi.string()).max(10),
     rules: Joi.array().items(Joi.string()).max(20),
-    contactEmail: Joi.string().email().required()
+    contactEmail: Joi.string().email().required(),
+    createChatRoom: Joi.boolean().optional()
   });
 
   const { error } = schema.validate(req.body, { abortEarly: false });

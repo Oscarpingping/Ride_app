@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Text, TextInput, Button, Surface, HelperText, Switch, Chip, ActivityIndicator, Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../context/AuthContext';
 import { clubApi } from '../../shared/api/club';
 import type { Club, CreateClubRequest, ClubLocation, ClubType } from '../../shared/types/club';
 
@@ -16,6 +17,7 @@ type CreateClubForm = {
   rules: string[];
   tags: string[];
   isPrivate: boolean;
+  createChatRoom: boolean;
 };
 
 const initialForm: CreateClubForm = {
@@ -27,10 +29,12 @@ const initialForm: CreateClubForm = {
   rules: [],
   tags: [],
   isPrivate: false,
+  createChatRoom: true,
 };
 
 export default function CreateClubScreen() {
   const router = useRouter();
+  const { currentUser, isAuthenticated } = useAuth();
   const [form, setForm] = useState<CreateClubForm>(initialForm);
   const [ruleInput, setRuleInput] = useState('');
   const [tagInput, setTagInput] = useState('');
@@ -38,6 +42,21 @@ export default function CreateClubScreen() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [validationErrors, setValidationErrors] = useState<Partial<CreateClubForm>>({});
+
+  useEffect(() => {
+    if (isAuthenticated && currentUser && !currentUser.canCreateClub) {
+      router.replace('/profile');
+    }
+  }, [isAuthenticated, currentUser, router]);
+
+  if (!isAuthenticated || !currentUser || !currentUser.canCreateClub) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.loadingText}>Checking permissions...</Text>
+      </View>
+    );
+  }
 
   const validateForm = (): boolean => {
     const errors: Partial<CreateClubForm> = {};
@@ -96,7 +115,8 @@ export default function CreateClubScreen() {
         isPrivate: form.isPrivate,
         tags: form.tags,
         rules: form.rules,
-        contactEmail: form.contactEmail
+        contactEmail: form.contactEmail,
+        createChatRoom: form.createChatRoom
       });
 
       if (response.success) {
@@ -320,6 +340,14 @@ export default function CreateClubScreen() {
           />
         </View>
 
+        <View style={styles.switchContainer}>
+          <Text>Create Chat Room</Text>
+          <Switch
+            value={form.createChatRoom}
+            onValueChange={value => setForm(prev => ({ ...prev, createChatRoom: value }))}
+          />
+        </View>
+
         <Button
           mode="contained"
           onPress={handleSubmit}
@@ -442,5 +470,10 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 16,
+  },
+  loadingText: {
+    marginTop: 20,
+    textAlign: 'center',
+    color: '#666',
   },
 }); 

@@ -38,9 +38,9 @@ export const clubApi = {
   },
 
   // 获取俱乐部详情
-  getClub: async (clubId: string): Promise<ClubResponse> => {
+  getClub: async (id: string): Promise<ClubResponse> => {
     try {
-      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${clubId}`);
+      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${id}`);
       return response;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to get club');
@@ -48,9 +48,9 @@ export const clubApi = {
   },
 
   // 更新俱乐部
-  updateClub: async (clubId: string, formData: FormData): Promise<ClubResponse> => {
+  updateClub: async (id: string, formData: FormData): Promise<ClubResponse> => {
     try {
-      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${clubId}`, 'PUT', formData);
+      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${id}`, 'PUT', formData);
       return response;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to update club');
@@ -58,9 +58,9 @@ export const clubApi = {
   },
 
   // 删除俱乐部
-  deleteClub: async (clubId: string): Promise<ClubResponse> => {
+  deleteClub: async (id: string): Promise<ClubResponse> => {
     try {
-      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${clubId}`, 'DELETE');
+      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${id}`, 'DELETE');
       return response;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to delete club');
@@ -68,9 +68,9 @@ export const clubApi = {
   },
 
   // 申请加入俱乐部
-  requestJoinClub: async (clubId: string, data: JoinClubRequest): Promise<ClubResponse> => {
+  requestJoinClub: async (id: string, data: JoinClubRequest): Promise<ClubResponse> => {
     try {
-      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${clubId}/join-requests`, 'POST', data);
+      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${id}/join-requests`, 'POST', data);
       return response;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to request join club');
@@ -79,14 +79,14 @@ export const clubApi = {
 
   // 处理加入申请
   handleJoinRequest: async (
-    clubId: string,
+    id: string,
     requestId: string,
     action: 'approve' | 'reject',
     responseMessage?: string
   ): Promise<ClubResponse> => {
     try {
       const response = await request<ClubResponse>(
-        `${API_ENDPOINTS.CLUBS.BASE}/${clubId}/join-requests/${requestId}`,
+        `${API_ENDPOINTS.CLUBS.BASE}/${id}/join-requests/${requestId}`,
         'POST',
         { action, response: responseMessage }
       );
@@ -97,19 +97,39 @@ export const clubApi = {
   },
 
   // 获取俱乐部成员
-  getClubMembers: async (clubId: string): Promise<ClubMemberResponse> => {
+  getClubMembers: async (id: string): Promise<ClubMemberResponse> => {
     try {
-      const response = await request<ClubMemberResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${clubId}/members`);
+      const response = await request<ClubMemberResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${id}/members`);
       return response;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to get club members');
     }
   },
 
-  // 添加管理员
-  addAdmin: async (clubId: string, userId: string): Promise<ClubResponse> => {
+  // 添加成员
+  addMember: async (id: string, userId: string): Promise<ClubResponse> => {
     try {
-      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${clubId}/admins`, 'POST', { userId });
+      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${id}/members/add`, 'POST', { userId });
+      return response;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to add member');
+    }
+  },
+
+  // 移除成员
+  removeMember: async (id: string, userId: string): Promise<ClubResponse> => {
+    try {
+      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${id}/members/remove`, 'POST', { userId });
+      return response;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to remove member');
+    }
+  },
+
+  // 添加管理员
+  addAdmin: async (id: string, userId: string): Promise<ClubResponse> => {
+    try {
+      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${id}/admins/add`, 'POST', { userId });
       return response;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to add admin');
@@ -117,9 +137,9 @@ export const clubApi = {
   },
 
   // 移除管理员
-  removeAdmin: async (clubId: string, userId: string): Promise<ClubResponse> => {
+  removeAdmin: async (id: string, userId: string): Promise<ClubResponse> => {
     try {
-      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${clubId}/admins/remove`, 'POST', { userId });
+      const response = await request<ClubResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${id}/admins/remove`, 'POST', { userId });
       return response;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to remove admin');
@@ -127,9 +147,9 @@ export const clubApi = {
   },
 
   // 获取俱乐部管理员
-  getClubAdmins: async (clubId: string): Promise<ClubAdminResponse> => {
+  getClubAdmins: async (id: string): Promise<ClubAdminResponse> => {
     try {
-      const response = await request<ClubAdminResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${clubId}/admins`);
+      const response = await request<ClubAdminResponse>(`${API_ENDPOINTS.CLUBS.BASE}/${id}/admins`);
       return response;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to get club admins');

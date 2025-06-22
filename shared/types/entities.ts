@@ -20,13 +20,17 @@ export interface ChatMessage {
   _id: string;
   chatId: string;
   sender: User;
-  content: string;
-  type: 'text' | 'emoji' | 'image' | 'video' | 'file' | 'url';
+  content: string;                 // 消息内容：文本或URL
+  type: 'text' | 'emoji' | 'image' | 'video' | 'audio' | 'file' | 'url';
   metadata?: {
     fileName?: string;            // 文件名
     fileSize?: number;            // 文件大小
     mimeType?: string;            // 文件类型
     duration?: number;            // 视频时长
+    width?: number;               // 图片/视频宽度
+    height?: number;              // 图片/视频高度
+    title?: string;               // URL标题
+    description?: string;         // URL描述
     thumbnail?: string;           // 缩略图URL
   };
   isRead: boolean;
@@ -91,4 +95,59 @@ export interface Club {
   updatedAt: Date;
   owner: User;
   members: User[];
-} 
+}
+
+// 前端工具函数：创建消息的metadata
+export const createMessageMetadata = (
+  type: 'text' | 'emoji' | 'image' | 'video' | 'audio' | 'file' | 'url',
+  metadata?: {
+    fileName?: string;
+    fileSize?: number;
+    mimeType?: string;
+    duration?: number;
+    width?: number;
+    height?: number;
+    title?: string;
+    description?: string;
+    thumbnail?: string;
+  }
+) => {
+  switch (type) {
+    case 'text':
+    case 'emoji':
+      return undefined; // 文本和表情不需要metadata
+    
+    case 'image':
+    case 'video':
+    case 'audio':
+    case 'file':
+    case 'url':
+      return metadata;
+    
+    default:
+      return metadata;
+  }
+};
+
+// 前端工具函数：获取消息的显示文本
+export const getMessageDisplayText = (content: string, type: string, metadata?: any): string => {
+  switch (type) {
+    case 'text':
+    case 'emoji':
+      return content;
+    
+    case 'image':
+    case 'video':
+    case 'audio':
+      return metadata?.fileName || content.split('/').pop() || 'Media';
+    
+    case 'file':
+      return metadata?.fileName || content.split('/').pop() || 'File';
+    
+    case 'url':
+      return metadata?.title || content;
+    
+    default:
+      return content;
+  }
+}; 

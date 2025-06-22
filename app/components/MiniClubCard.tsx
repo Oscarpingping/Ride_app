@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Text, Surface } from 'react-native-paper';
 import type { Club } from '../../shared/types/club';
+import { ImageService } from '../services/imageService';
 
 interface MiniClubCardProps {
   club: Club;
@@ -20,7 +21,7 @@ export const MiniClubCard: React.FC<MiniClubCardProps> = ({ club, onPress }) => 
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
       <Surface style={styles.surface} elevation={2}>
         {club.logo ? (
-          <Image source={{ uri: club.logo }} style={styles.logo} resizeMode="cover" />
+          <Image source={{ uri: ImageService.getImageUrl(club.logo) }} style={styles.logo} resizeMode="cover" />
         ) : (
           <View style={styles.logoPlaceholder} />
         )}
@@ -40,11 +41,9 @@ export const MiniClubCard: React.FC<MiniClubCardProps> = ({ club, onPress }) => 
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
-    margin: 8,
-    minWidth: 140,
-    maxWidth: 180,
+    width: (Dimensions.get('window').width - 8 * 3) / 2,
     height: 180,
+    margin: 8,
   },
   surface: {
     flex: 1,

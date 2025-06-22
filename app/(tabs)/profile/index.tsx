@@ -1,7 +1,7 @@
 import { MyClubGrid } from '../../(profile)/MyClubGrid'; 
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
-import { Text, Button, TextInput, Avatar, Portal, Modal, ActivityIndicator, List, Divider, FAB, Surface, HelperText, Chip } from 'react-native-paper';
+import { SafeAreaView, View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, FlatList, Image, TouchableOpacity, Dimensions, StatusBar } from 'react-native';
+import { Text, Button, TextInput, Avatar, Portal, Modal, ActivityIndicator, List, Divider, FAB, Surface, HelperText, Chip, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../../app/context/AuthContext';
 import { useRides } from '../../../app/context/RideContext';
@@ -12,10 +12,25 @@ import type { User, TerrainType, PaceLevel, DifficultyLevel, UserPreferences } f
 import { TERRAIN_OPTIONS, PACE_OPTIONS, DIFFICULTY_OPTIONS } from '../../../shared/types/user-unified';
 import type { Ride } from '../../../shared/types/ride';
 import type { Club } from '../../../shared/types/club';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system';
+import { ImageService } from '../../services/imageService';
+import { getInitials } from '../../utils/textUtils';
 
 
 export default function ProfileScreen() {
-  const { currentUser, isAuthenticated, isLoading, error, login, register, logout } = useAuth();
+  const router = useRouter();
+  const { 
+    currentUser, 
+    isAuthenticated, 
+    isLoading, 
+    error, 
+    login, 
+    register, 
+    logout, 
+    updateProfile
+  } = useAuth();
   const { rides } = useRides();
   const [activeTab, setActiveTab] = useState('activities');
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -35,6 +50,8 @@ export default function ProfileScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const [contacts, setContacts] = useState<User[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [isLoadingClubs, setIsLoadingClubs] = useState(false);
+  const [clubError, setClubError] = useState<string | null>(null);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
@@ -65,7 +82,9 @@ export default function ProfileScreen() {
       difficulty: []
     }
   });
-  const router = useRouter();
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   // 添加调试日志
   const addDebugLog = (message: string) => {
@@ -108,6 +127,14 @@ export default function ProfileScreen() {
       });
     }
   }, [currentUser]);
+
+  // 调试：监听currentUser.avatar的变化
+  const prevAvatar = React.useRef<string | null>(null);
+  useEffect(() => {
+    if (currentUser?.avatar !== prevAvatar.current) {
+      prevAvatar.current = currentUser?.avatar || null;
+    }
+  }, [currentUser?.avatar]);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -201,17 +228,31 @@ export default function ProfileScreen() {
   };
 
   const fetchClubs = async () => {
+    if (!currentUser?._id) return;
+    
+    setIsLoadingClubs(true);
+    setClubError('');
+    
     try {
       const response = await clubApi.getUserClubs();
+      
       if (response.success && response.data) {
         setClubs(response.data);
       } else {
-        console.error('Failed to fetch clubs:', response.error);
+        setClubError(response.error || 'Failed to load clubs');
       }
-    } catch (error) {
-      console.error('Error fetching clubs:', error);
+    } catch (err) {
+      setClubError('Failed to load clubs');
+    } finally {
+      setIsLoadingClubs(false);
     }
   };
+
+  useEffect(() => {
+    if (currentUser?._id) {
+      fetchClubs();
+    }
+  }, [currentUser?._id]);
 
   const handleAddContact = async () => {
     if (!validateEmail(contactEmail)) {
@@ -266,14 +307,67 @@ export default function ProfileScreen() {
     }
   };
 
-  const renderClubs = () => (
-    <View style={styles.clubsContainer}>
-      <MyClubGrid 
-        clubs={clubs} 
-        onCreateClub={() => router.push('/(profile)/createClub')} 
-      />
-    </View>
-  );
+  const handlePickAndUploadAvatar = async () => {
+    try {
+      const pickerResult = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!pickerResult.canceled && pickerResult.assets[0]) {
+        setUploadLoading(true);
+        const image = pickerResult.assets[0];
+        
+        const uploadResult = await ImageService.uploadAvatarWithUserData(image.uri);
+        
+        if (uploadResult.success && uploadResult.data) {
+          await updateProfile(uploadResult.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error picking/uploading image:', error);
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const handleClubUpdate = async (updatedClub: Club) => {
+    setClubs(prevClubs => {
+      const newClubs = prevClubs.map(club => {
+        if (club._id === updatedClub._id) {
+          return updatedClub;
+        }
+        return club;
+      });
+      return newClubs;
+    });
+  };
+
+  const handleCreateClub = () => {
+    router.push('/createClub');
+  };
+
+  const renderClubs = () => {
+    return (
+      <View style={styles.section}>
+        <Text variant="titleLarge" style={styles.sectionTitle}>My Clubs</Text>
+        {isLoadingClubs ? (
+          <ActivityIndicator />
+        ) : clubError ? (
+          <Text style={styles.error}>{clubError}</Text>
+        ) : (
+          <MyClubGrid 
+            clubs={clubs} 
+            onCreateClub={handleCreateClub}
+            onClubUpdate={handleClubUpdate}
+            canCreateClub={currentUser?.canCreateClub || false}
+          />
+        )}
+      </View>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -535,7 +629,7 @@ export default function ProfileScreen() {
             key={contact._id}
             title={contact.name}
             description={contact.email}
-            left={props => <Avatar.Text {...props} label={contact.name.substring(0, 2).toUpperCase()} />}
+            left={props => <Avatar.Text {...props} label={getInitials(contact.name)} />}
             right={props => (
               <Button
                 {...props}
@@ -555,12 +649,30 @@ export default function ProfileScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Avatar.Text
-          size={80}
-          label={currentUser?.name?.substring(0, 2).toUpperCase() || '??'}
-        />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
+      <ScrollView>
+        <View style={{ alignItems: 'center', marginTop: 24 }}>
+          {currentUser?.avatar ? (
+            <Image source={{ uri: ImageService.getImageUrl(currentUser.avatar) }} style={{ width: 100, height: 100, borderRadius: 50 }} />
+          ) : (
+            <Avatar.Text
+              size={80}
+              label={getInitials(currentUser?.name)}
+            />
+          )}
+          <IconButton
+            icon={uploadLoading ? "loading" : "pencil"}
+            size={24}
+            style={{ position: 'absolute', right: 10, bottom: 10 }}
+            onPress={currentUser && !uploadLoading ? () => handlePickAndUploadAvatar() : undefined}
+            disabled={uploadLoading}
+          />
+          {uploadError && (
+            <Text style={styles.error} numberOfLines={2}>
+              {uploadError}
+            </Text>
+          )}
+        </View>
         <View style={styles.userInfo}>
           <Text style={styles.name}>{currentUser?.name}</Text>
           <Text style={styles.email}>{currentUser?.email}</Text>
@@ -592,228 +704,258 @@ export default function ProfileScreen() {
         >
           Edit Profile
         </Button>
-      </View>
 
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{currentUser?.ridesCreated || 0}</Text>
-          <Text style={styles.statLabel}>Rides Created</Text>
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{currentUser?.ridesCreated || 0}</Text>
+            <Text style={styles.statLabel}>Rides Created</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{currentUser?.ridesJoined || 0}</Text>
+            <Text style={styles.statLabel}>Rides Joined</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{currentUser?.rating || 0}</Text>
+            <Text style={styles.statLabel}>Rating</Text>
+          </View>
         </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{currentUser?.ridesJoined || 0}</Text>
-          <Text style={styles.statLabel}>Rides Joined</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{currentUser?.rating || 0}</Text>
-          <Text style={styles.statLabel}>Rating</Text>
-        </View>
-      </View>
 
-      <View style={styles.tabs}>
-        <Button
-          mode={activeTab === 'activities' ? 'contained' : 'outlined'}
-          onPress={() => setActiveTab('activities')}
-          style={styles.tabButton}
-        >
-          Activities
-        </Button>
-        <Button
-          mode={activeTab === 'contacts' ? 'contained' : 'outlined'}
-          onPress={() => setActiveTab('contacts')}
-          style={styles.tabButton}
-        >
-          Contacts
-        </Button>
-        <Button
-          mode={activeTab === 'clubs' ? 'contained' : 'outlined'}
-          onPress={() => setActiveTab('clubs')}
-          style={styles.tabButton}
-        >
-          Clubs
-        </Button>
-      </View>
-
-      {activeTab === 'activities' && (
-        <ScrollView style={styles.content}>{renderActivities()}</ScrollView>
-      )}
-      {activeTab === 'contacts' && (
-        <ScrollView style={styles.content}>{renderContacts()}</ScrollView>
-      )}
-      {activeTab === 'clubs' && (
-        <ScrollView style={styles.content}>{renderClubs()}</ScrollView>
-      )}
-
-      {activeTab === 'contacts' && (
-        <FAB
-          icon="account-plus"
-          style={styles.fab}
-          onPress={() => setShowAddContactModal(true)}
-        />
-      )}
-
-      <Portal>
-        <Modal
-          visible={showAddContactModal}
-          onDismiss={() => setShowAddContactModal(false)}
-          contentContainerStyle={styles.modalContainer}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.keyboardAvoidingView}
+        <View style={styles.tabs}>
+          <Button
+            mode={activeTab === 'activities' ? 'contained' : 'outlined'}
+            onPress={() => setActiveTab('activities')}
+            style={styles.tabButton}
           >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-              <Surface style={styles.surface}>
-                <Text style={styles.modalTitle}>Add Contact</Text>
-                <TextInput
-                  label="Contact's Email"
-                  value={contactEmail}
-                  onChangeText={setContactEmail}
-                  style={styles.input}
-                  mode="outlined"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                {formError && <HelperText type="error" visible={true}>{formError}</HelperText>}
-                <Button mode="contained" onPress={handleAddContact} style={styles.modalButton}>
-                  Add Contact
-                </Button>
-              </Surface>
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </Modal>
+            Activities
+          </Button>
+          <Button
+            mode={activeTab === 'contacts' ? 'contained' : 'outlined'}
+            onPress={() => setActiveTab('contacts')}
+            style={styles.tabButton}
+          >
+            Contacts
+          </Button>
+          <Button
+            mode={activeTab === 'clubs' ? 'contained' : 'outlined'}
+            onPress={() => setActiveTab('clubs')}
+            style={styles.tabButton}
+          >
+            Clubs
+          </Button>
+        </View>
 
-        <Modal
-          visible={editProfileModalVisible}
-          onDismiss={() => setEditProfileModalVisible(false)}
-          contentContainerStyle={styles.modalContent}
-        >
-          <ScrollView>
-            <TextInput
-              label="Name"
-              value={editedProfile.name}
-              onChangeText={(text) => setEditedProfile({ ...editedProfile, name: text })}
-              style={styles.input}
-            />
-            <TextInput
-              label="Bio"
-              value={editedProfile.bio}
-              onChangeText={(text) => setEditedProfile({ ...editedProfile, bio: text })}
-              multiline
-              numberOfLines={3}
-              style={styles.input}
-            />
-            <TextInput
-              label="City"
-              value={editedProfile.location?.city}
-              onChangeText={(text) => setEditedProfile({
-                ...editedProfile,
-                location: { ...editedProfile.location, city: text }
-              })}
-              style={styles.input}
-            />
-            <TextInput
-              label="Province"
-              value={editedProfile.location?.province}
-              onChangeText={(text) => setEditedProfile({
-                ...editedProfile,
-                location: { ...editedProfile.location, province: text }
-              })}
-              style={styles.input}
-            />
-            <TextInput
-              label="Country"
-              value={editedProfile.location?.country}
-              onChangeText={(text) => setEditedProfile({
-                ...editedProfile,
-                location: { ...editedProfile.location, country: text }
-              })}
-              style={styles.input}
-            />
-            <Text style={styles.sectionTitle}>Ride Preferences</Text>
-            <View style={styles.preferencesSection}>
-              <Text style={styles.preferenceLabel}>Terrain</Text>
-              <View style={styles.preferenceOptions}>
-                {TERRAIN_OPTIONS.map((type) => (
-                  <Chip
-                    key={type}
-                    selected={editedProfile.preferences.terrain.includes(type as TerrainType)}
-                    onPress={() => {
-                      const terrain = editedProfile.preferences.terrain;
-                      const newTerrain = terrain.includes(type as TerrainType)
-                        ? terrain.filter(t => t !== type)
-                        : [...terrain, type as TerrainType];
-                      setEditedProfile({
-                        ...editedProfile,
-                        preferences: {
-                          ...editedProfile.preferences,
-                          terrain: newTerrain
-                        }
-                      });
-                    }}
-                    style={styles.chip}
-                  >
-                    {type}
-                  </Chip>
-                ))}
+        {activeTab === 'activities' && (
+          <ScrollView style={styles.content}>{renderActivities()}</ScrollView>
+        )}
+        {activeTab === 'contacts' && (
+          <ScrollView style={styles.content}>{renderContacts()}</ScrollView>
+        )}
+        {activeTab === 'clubs' && (
+          <ScrollView style={styles.content}>{renderClubs()}</ScrollView>
+        )}
+
+        {activeTab === 'contacts' && (
+          <FAB
+            icon="account-plus"
+            style={styles.fab}
+            onPress={() => setShowAddContactModal(true)}
+          />  
+        )}
+
+        <Portal>
+          <Modal
+            visible={showAddContactModal}
+            onDismiss={() => setShowAddContactModal(false)}
+            contentContainerStyle={styles.modalContainer}
+          >
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={styles.keyboardAvoidingView}
+            >
+              <ScrollView contentContainerStyle={styles.scrollContent}>
+                <Surface style={styles.surface}>
+                  <Text style={styles.modalTitle}>Add Contact</Text>
+                  <TextInput
+                    label="Contact's Email"
+                    value={contactEmail}
+                    onChangeText={setContactEmail}
+                    style={styles.input}
+                    mode="outlined"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                  {formError && <HelperText type="error" visible={true}>{formError}</HelperText>}
+                  <Button mode="contained" onPress={handleAddContact} style={styles.modalButton}>
+                    Add Contact
+                  </Button>
+                </Surface>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </Modal>
+
+          <Modal
+            visible={editProfileModalVisible}
+            onDismiss={() => setEditProfileModalVisible(false)}
+            contentContainerStyle={styles.modalContent}
+          >
+            <ScrollView>
+              <View style={styles.imageUploadContainer}>
+                {selectedImage ? (
+                  <Image source={{ uri: selectedImage }} style={styles.previewImage} />
+                ) : currentUser?.avatar ? (
+                  <Image source={{ uri: ImageService.getImageUrl(currentUser.avatar) }} style={styles.previewImage} />
+                ) : (
+                  <View style={styles.imagePlaceholder} />
+                )}
+                <Button 
+                  mode="contained" 
+                  onPress={currentUser && !uploadLoading ? () => handlePickAndUploadAvatar() : undefined} 
+                  style={styles.uploadButton}
+                  loading={uploadLoading}
+                  disabled={uploadLoading}
+                >
+                  {uploadLoading ? 'Uploading...' : 'Change Photo'}
+                </Button>
+                {uploadError && (
+                  <Text style={styles.error} numberOfLines={2}>
+                    {uploadError}
+                  </Text>
+                )}
               </View>
-              <Text style={styles.preferenceLabel}>Pace</Text>
-              <View style={styles.preferenceOptions}>
-                {PACE_OPTIONS.map((level) => (
-                  <Chip
-                    key={level}
-                    selected={editedProfile.preferences.pace.includes(level as PaceLevel)}
-                    onPress={() => {
-                      const pace = editedProfile.preferences.pace;
-                      const newPace = pace.includes(level as PaceLevel)
-                        ? pace.filter(p => p !== level)
-                        : [...pace, level as PaceLevel];
-                      setEditedProfile({
-                        ...editedProfile,
-                        preferences: {
-                          ...editedProfile.preferences,
-                          pace: newPace
-                        }
-                      });
-                    }}
-                    style={styles.chip}
-                  >
-                    {level}
-                  </Chip>
-                ))}
+              <TextInput
+                label="Name"
+                value={editedProfile.name}
+                onChangeText={(text) => setEditedProfile({ ...editedProfile, name: text })}
+                style={styles.input}
+              />
+              <TextInput
+                label="Bio"
+                value={editedProfile.bio}
+                onChangeText={(text) => setEditedProfile({ ...editedProfile, bio: text })}
+                multiline
+                numberOfLines={3}
+                style={styles.input}
+              />
+              <TextInput
+                label="City"
+                value={editedProfile.location?.city}
+                onChangeText={(text) => setEditedProfile({
+                  ...editedProfile,
+                  location: { ...editedProfile.location, city: text }
+                })}
+                style={styles.input}
+              />
+              <TextInput
+                label="Province"
+                value={editedProfile.location?.province}
+                onChangeText={(text) => setEditedProfile({
+                  ...editedProfile,
+                  location: { ...editedProfile.location, province: text }
+                })}
+                style={styles.input}
+              />
+              <TextInput
+                label="Country"
+                value={editedProfile.location?.country}
+                onChangeText={(text) => setEditedProfile({
+                  ...editedProfile,
+                  location: { ...editedProfile.location, country: text }
+                })}
+                style={styles.input}
+              />
+              <Text style={styles.sectionTitle}>Ride Preferences</Text>
+              <View style={styles.preferencesSection}>
+                <Text style={styles.preferenceLabel}>Terrain</Text>
+                <View style={styles.preferenceOptions}>
+                  {TERRAIN_OPTIONS.map((type) => (
+                    <Chip
+                      key={type}
+                      selected={editedProfile.preferences.terrain.includes(type as TerrainType)}
+                      onPress={() => {
+                        const terrain = editedProfile.preferences.terrain;
+                        const newTerrain = terrain.includes(type as TerrainType)
+                          ? terrain.filter(t => t !== type)
+                          : [...terrain, type as TerrainType];
+                        setEditedProfile({
+                          ...editedProfile,
+                          preferences: {
+                            ...editedProfile.preferences,
+                            terrain: newTerrain
+                          }
+                        });
+                      }}
+                      style={styles.chip}
+                    >
+                      {type}
+                    </Chip>
+                  ))}
+                </View>
+                <Text style={styles.preferenceLabel}>Pace</Text>
+                <View style={styles.preferenceOptions}>
+                  {PACE_OPTIONS.map((level) => (
+                    <Chip
+                      key={level}
+                      selected={editedProfile.preferences.pace.includes(level as PaceLevel)}
+                      onPress={() => {
+                        const pace = editedProfile.preferences.pace;
+                        const newPace = pace.includes(level as PaceLevel)
+                          ? pace.filter(p => p !== level)
+                          : [...pace, level as PaceLevel];
+                        setEditedProfile({
+                          ...editedProfile,
+                          preferences: {
+                            ...editedProfile.preferences,
+                            pace: newPace
+                          }
+                        });
+                      }}
+                      style={styles.chip}
+                    >
+                      {level}
+                    </Chip>
+                  ))}
+                </View>
+                <Text style={styles.preferenceLabel}>Difficulty</Text>
+                <View style={styles.preferenceOptions}>
+                  {DIFFICULTY_OPTIONS.map((level) => (
+                    <Chip
+                      key={level}
+                      selected={editedProfile.preferences.difficulty.includes(level as DifficultyLevel)}
+                      onPress={() => {
+                        const difficulty = editedProfile.preferences.difficulty;
+                        const newDifficulty = difficulty.includes(level as DifficultyLevel)
+                          ? difficulty.filter(d => d !== level)
+                          : [...difficulty, level as DifficultyLevel];
+                        setEditedProfile({
+                          ...editedProfile,
+                          preferences: {
+                            ...editedProfile.preferences,
+                            difficulty: newDifficulty
+                          }
+                        });
+                      }}
+                      style={styles.chip}
+                    >
+                      {level}
+                    </Chip>
+                  ))}
+                </View>
               </View>
-              <Text style={styles.preferenceLabel}>Difficulty</Text>
-              <View style={styles.preferenceOptions}>
-                {DIFFICULTY_OPTIONS.map((level) => (
-                  <Chip
-                    key={level}
-                    selected={editedProfile.preferences.difficulty.includes(level as DifficultyLevel)}
-                    onPress={() => {
-                      const difficulty = editedProfile.preferences.difficulty;
-                      const newDifficulty = difficulty.includes(level as DifficultyLevel)
-                        ? difficulty.filter(d => d !== level)
-                        : [...difficulty, level as DifficultyLevel];
-                      setEditedProfile({
-                        ...editedProfile,
-                        preferences: {
-                          ...editedProfile.preferences,
-                          difficulty: newDifficulty
-                        }
-                      });
-                    }}
-                    style={styles.chip}
-                  >
-                    {level}
-                  </Chip>
-                ))}
-              </View>
-            </View>
-            <Button mode="contained" onPress={handleUpdateProfile} style={styles.saveButton}>
-              Save Changes
-            </Button>
-          </ScrollView>
-        </Modal>
-      </Portal>
-    </View>
+              <Button
+                mode="contained"
+                onPress={handleUpdateProfile}
+                loading={uploadLoading}
+                disabled={!selectedImage || uploadLoading}
+                style={styles.button}
+              >
+                Save Changes
+              </Button>
+              {uploadError ? <Text style={styles.errorText}>{uploadError}</Text> : null}
+            </ScrollView>
+          </Modal>
+        </Portal>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -886,33 +1028,40 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     backgroundColor: '#f5f5f5',
   },
   userInfo: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: 10,
+    justifyContent: 'center',
   },
   name: {
     fontSize: 20,
     fontWeight: 'bold',
+    marginBottom: 2,
   },
   email: {
     color: '#666',
+    fontSize: 14,
   },
   logoutButton: {
     marginLeft: 10,
   },
   statsContainer: {
     flexDirection: 'row',
-    padding: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    marginBottom: 0,
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
+    paddingVertical: 5,
   },
   statNumber: {
     fontSize: 20,
@@ -1028,8 +1177,28 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     maxHeight: '80%',
   },
-  saveButton: {
+  button: {
     marginTop: 20,
+  },
+  imageUploadContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  previewImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 10,
+  },
+  imagePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#e0e0e0',
+    marginBottom: 10,
+  },
+  uploadButton: {
+    marginTop: 10,
   },
   preferencesSection: {
     marginBottom: 20,
@@ -1045,5 +1214,17 @@ const styles = StyleSheet.create({
   },
   chip: {
     margin: 4,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  section: {
+    padding: 20,
+  },
+  error: {
+    color: 'red',
+    marginBottom: 10,
   },
 }); 

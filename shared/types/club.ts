@@ -35,7 +35,10 @@ export interface JoinRequestHistory extends JoinRequest {
 
 export interface ChatRoom {
   _id: string;
-  club: string;                  // 俱乐部ID
+  club: string;
+  name: string;
+  type: 'club' | 'group' | 'activity' | 'other';
+  members: string[];
   messages: ChatMessage[];
   lastMessage: {
     sender: string;
@@ -43,6 +46,8 @@ export interface ChatRoom {
     type: string;
     timestamp: string;
   };
+  maxMembers: number;
+  autoDeleteDuration: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -56,17 +61,20 @@ export interface Club {
   coverImage?: string;
   type: ClubType;
   founder: {
-    userId: string;
+    _id: string;
+    name: string;
     name_sid: string;
     avatar?: string;
   };
   admins: Array<{
-    userId: string;
+    _id: string;
+    name: string;
     name_sid: string;
     avatar?: string;
   }>;
   members: Array<{
-    userId: string;
+    _id: string;
+    name: string;
     name_sid: string;
     avatar?: string;
   }>;
@@ -98,6 +106,7 @@ export interface CreateClubRequest {
   contactEmail: string;
   logo?: File;
   coverImage?: File;
+  createChatRoom?: boolean; // 是否创建聊天室
 }
 
 export interface UpdateClubRequest {

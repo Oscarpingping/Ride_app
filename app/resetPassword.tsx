@@ -13,7 +13,7 @@ export default function ResetPasswordScreen() {
   const router = useRouter();
 
   const validatePassword = (password: string) => {
-    return password.length >= 6;
+    return password.length >= 8;
   };
 
   const handleSubmit = async () => {
@@ -22,7 +22,7 @@ export default function ResetPasswordScreen() {
       setIsLoading(true);
 
       if (!validatePassword(password)) {
-        setError('Password must be at least 6 characters');
+        setError('Password must be at least 8 characters');
         return;
       }
 

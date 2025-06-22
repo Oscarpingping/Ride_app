@@ -8,12 +8,14 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "typeRoots": ["./app/types"]
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    "app/types/*.d.ts"
   ]
 }

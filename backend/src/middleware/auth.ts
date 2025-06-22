@@ -34,7 +34,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction): Pro
     }
 
     // console.log('✅ User authenticated:', user._id);
-    req.user = { userId: user._id };
+    req.user = { _id: user._id };
     next();
   } catch (error) {
     // console.error(`[${new Date().toISOString()}] Auth middleware error:`, error);

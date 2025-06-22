@@ -1,5 +1,5 @@
 import express from 'express';
-import { userController } from '../controllers/userController';
+import { userController, searchUsers, uploadAvatar, multerErrorHandler } from '../controllers/userController';
 import { auth } from '../middleware/auth';
 import { AuthRequest } from '../types/auth';
 
@@ -96,5 +96,10 @@ router.post('/logout', auth, (_req: AuthRequest, res: express.Response) => {
     message: '登出成功' 
   });
 });
+
+// 用户头像上传
+router.post('/avatar', auth, ...uploadAvatar, multerErrorHandler);
+
+router.get('/', searchUsers);
 
 export default router; 

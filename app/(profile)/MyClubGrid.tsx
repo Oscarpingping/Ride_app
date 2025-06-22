@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Text } from 'react-native-paper';
+import { useRouter } from 'expo-router';
 import type { Club } from '../../shared/types/club';
 import { MiniClubCard } from '../components/MiniClubCard';
 import { ClubModals } from '../components/club/ClubModals';
@@ -13,85 +14,73 @@ const CARD_HEIGHT = 180;
 interface MyClubGridProps {
   clubs: Club[];
   onCreateClub: () => void;
+  onClubUpdate?: (updatedClub: Club) => void;
+  canCreateClub?: boolean;
 }
 
-export const MyClubGrid: React.FC<MyClubGridProps> = ({ clubs, onCreateClub }) => {
-  const { openModal } = useClubModal();
-  const [selectedClub, setSelectedClub] = useState<Club | null>(null);
-
-  // 插入加号卡片
-  const data = clubs.slice();
-  if (data.length % 4 !== 3) {
-    data.splice(3, 0, { _id: 'add', isAdd: true } as any);
-  }
-
-  // 2*2分组
-  const rows = [];
-  for (let i = 0; i < data.length; i += 2) {
-    rows.push(data.slice(i, i + 2));
-  }
+export function MyClubGrid({ clubs, onCreateClub, onClubUpdate, canCreateClub = false }: MyClubGridProps) {
+  const router = useRouter();
+  const { modalType, modalProps, openModal, closeModal } = useClubModal();
 
   const handleClubPress = (club: Club) => {
-    setSelectedClub(club);
-    // TODO: 添加导航到俱乐部详情页的逻辑
+    router.push(`/club/${club._id}`);
   };
 
-  const handleUpdateCover = () => {
-    if (selectedClub) {
-      openModal('UPDATE_COVER', { clubId: selectedClub._id });
+  const handleClubUpdate = (updatedClub: Club) => {
+    if (onClubUpdate) {
+      onClubUpdate(updatedClub);
     }
   };
 
-  const handleUpdateLogo = () => {
-    if (selectedClub) {
-      openModal('UPDATE_LOGO', { clubId: selectedClub._id });
-    }
+  const handleCreateClub = () => {
+    onCreateClub();
   };
 
   return (
     <View style={styles.container}>
-      {rows.map((row, rowIndex) => (
-        <View key={rowIndex} style={styles.row}>
-          {row.map((item: any) =>
-            item.isAdd ? (
-              <TouchableOpacity 
-                key={item._id} 
-                style={styles.addCard} 
-                onPress={onCreateClub} 
-                activeOpacity={0.8}
-              >
-                <Text style={styles.plus}>+</Text>
-                <Text style={styles.addText}>Create Club</Text>
-              </TouchableOpacity>
-            ) : (
-              <MiniClubCard 
-                key={item._id} 
-                club={item} 
-                onPress={() => handleClubPress(item)}
-              />
-            )
-          )}
-        </View>
-      ))}
-      
-      <ClubModals 
-        visible={!!selectedClub}
-        type={null}
-        clubId={selectedClub?._id}
-        onDismiss={() => setSelectedClub(null)}
-      />
+      <View style={styles.grid}>
+        {clubs.map(club => (
+          <MiniClubCard
+            key={club._id}
+            club={club}
+            onPress={() => handleClubPress(club)}
+          />
+        ))}
+        {canCreateClub && (
+          <TouchableOpacity
+            style={styles.addCard}
+            onPress={handleCreateClub}
+            activeOpacity={0.8}
+            accessible={true}
+            accessibilityLabel="Create Club Button"
+            accessibilityRole="button"
+          >
+            <Text style={styles.plus}>+</Text>
+            <Text style={styles.addText}>Create Club</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      {modalType && modalProps?.club && (
+        <ClubModals
+          visible={!!modalType}
+          type={modalType}
+          club={modalProps.club}
+          onDismiss={closeModal}
+          onUpdate={handleClubUpdate}
+        />
+      )}
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    padding: 8,
+    flex: 1,
   },
-  row: {
+  grid: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-    marginBottom: CARD_MARGIN,
+    flexWrap: 'wrap',
+    padding: CARD_MARGIN,
   },
   addCard: {
     width: CARD_WIDTH,
@@ -112,7 +101,6 @@ const styles = StyleSheet.create({
   },
   addText: {
     fontSize: 15,
-    color: '#ff6600',
-    fontWeight: '600',
+    color: '#666',
   },
 }); 

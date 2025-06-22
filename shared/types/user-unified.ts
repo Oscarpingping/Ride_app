@@ -32,6 +32,7 @@ export interface BaseUser {
 
 // 完整用户信息（包含所有字段）
 export interface User extends BaseUser {
+  userId: string;      // 兼容 Club 接口中的 userId
   bio?: string;
   rating?: number;
   ridesJoined?: number;
