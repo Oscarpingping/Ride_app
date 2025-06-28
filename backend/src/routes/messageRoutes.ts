@@ -14,12 +14,21 @@ router.get('/', messageController.getUserMessages);
 router.get('/ride/:rideId', messageController.getRideMessages);
 
 // 发送消息
-router.post('/', messageController.sendMessage);
+router.post('/send', messageController.sendMessage);
 
 // 删除消息
 router.delete('/:id', messageController.deleteMessage);
 
 // 获取聊天线程
 router.get('/threads', messageController.getChatThreads);
+
+// 获取聊天室消息
+router.get('/chatroom/:chatRoomId', messageController.getChatRoomMessages);
+
+// 发送消息到聊天室
+router.post('/chatroom/:chatRoomId', messageController.sendChatRoomMessage);
+
+// 编辑消息
+router.put('/:id', messageController.editMessage);
 
 export default router; 

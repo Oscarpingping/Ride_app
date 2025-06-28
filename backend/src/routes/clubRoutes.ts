@@ -9,6 +9,7 @@ import {
   deleteClub,
   requestJoinClub,
   handleJoinRequest,
+  getJoinRequests,
   getClubMembers,
   addMember,
   removeMember,
@@ -35,6 +36,7 @@ router.delete('/:id', auth, deleteClub);
 
 // 成员管理
 router.post('/:id/join-requests', auth, requestJoinClub);
+router.get('/:id/join-requests', auth, getJoinRequests);
 router.post('/:id/join-requests/:requestId', auth, handleJoinRequest);
 router.get('/:id/members', auth, getClubMembers);
 router.post('/:id/members/add', auth, addMember);

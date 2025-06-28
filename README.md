@@ -958,3 +958,207 @@ EXPO_PUBLIC_NGINX_URL=http://192.168.1.50
 - `backend/src/models/ChatRoom.ts`：添加权限验证和操作方法
 - `README.md`：添加本次权限控制优化记录
 
+# 2024-12-19 聊天室数据模型优化和默认值处理
+
+### 主要目的
+优化聊天室（ChatRoom）数据模型，为所有timestamp相关字段添加默认值，避免前端渲染时出现"Invalid time value"等类型错误，提升应用健壮性。
+
+### 完成的主要任务
+1. **后端数据模型优化**：
+   - 修改 `ChatRoom.ts` 模型，为所有timestamp字段添加 `default: Date.now`
+   - 为 `logo` 字段设置默认值：`/Users/taoliu/Wildpals/assets/images/logo.png`
+   - 为 `name` 字段添加默认值：`'New Chatroom'`
+   - 为 `members` 和 `pinnedMessages` 数组添加默认值：`[]`
+   - 新增 `lastMessageTime` 字段，默认值为当前时间
+
+2. **前端渲染健壮性增强**：
+   - 修改 `messages/index.tsx`，添加安全的时间格式化函数 `formatTime()`
+   - 为所有可空字段添加兜底显示（如 `'Unknown'`、`'No content'`、`'--'`）
+   - 修复TypeScript类型错误，为函数参数添加类型注解
+
+3. **聊天室详情页面优化**：
+   - 修改 `messages/[chatRoomId].tsx`，为头像和标题添加默认值处理
+   - 确保即使数据缺失也能正常显示UI
+
+### 关键决策和解决方案
+1. **混合模式数据同步**：ChatRoom表中冗余存储name/logo/members，后端通过Club模型的post('save')钩子自动同步，保证数据一致性
+2. **前端兜底策略**：所有可空字段在前端渲染层做有效性检查，无效时显示默认值，避免应用崩溃
+3. **时间处理优化**：使用try-catch包装时间格式化逻辑，捕获无效时间戳并显示'--'
+4. **默认值分层**：后端Schema设置基础默认值，前端渲染层设置显示默认值，双重保障
+
+### 使用的技术栈
+- **后端**：Mongoose (MongoDB ODM)、TypeScript
+- **前端**：React Native、TypeScript、date-fns
+- **数据验证**：Mongoose Schema validation、前端类型检查
+
+### 修改的文件
+- **后端模型**：`backend/src/models/ChatRoom.ts`
+- **前端页面**：`app/(tabs)/messages/index.tsx`、`app/messages/[chatRoomId].tsx`
+- **文档更新**：`README.md`
+
+### 技术细节
+1. **时间字段默认值**：
+   ```typescript
+   lastMessageTime: {
+     type: Date,
+     default: Date.now
+   }
+   ```
+
+2. **安全时间格式化**：
+   ```typescript
+   const formatTime = (timestamp: any) => {
+     if (!timestamp) return '--';
+     try {
+       const date = new Date(timestamp);
+       if (isNaN(date.getTime())) return '--';
+       return formatDistanceToNow(date, { addSuffix: true });
+     } catch (error) {
+       console.warn('Invalid timestamp:', timestamp, error);
+       return '--';
+     }
+   };
+   ```
+
+3. **数组字段默认值**：
+   ```typescript
+   members: {
+     type: [{
+       type: Schema.Types.ObjectId,
+       ref: 'User'
+     }],
+     default: []
+   }
+   ```
+
+### 解决的问题
+- ✅ 避免"Invalid time value"渲染错误
+- ✅ 防止undefined/null字段导致UI崩溃
+- ✅ 确保新创建的聊天室有合理的默认值
+- ✅ 提升应用的整体健壮性和用户体验
+
+# 2024-12-19 聊天室UI布局优化
+
+### 主要目的
+优化聊天室在消息页面的显示效果，调整头像尺寸和卡片布局，提升用户体验。
+
+### 完成的主要任务
+1. **头像尺寸调整**：
+   - 将聊天室头像尺寸从40调整为20，使界面更紧凑
+   - 保持头像清晰度和可识别性
+
+2. **卡片布局优化**：
+   - 采用单行布局，每行高度为60px，宽度适应屏幕
+   - 移除网格布局，恢复传统的列表显示方式
+   - 优化卡片内边距和间距
+
+3. **样式细节调整**：
+   - 调整字体大小：聊天室名称14px，时间戳11px，消息内容12px
+   - 优化间距：头像与文字间距8px，卡片内边距12px
+   - 调整未读消息指示器尺寸为8x8px
+   - 设置卡片间距为8px
+
+### 关键决策和解决方案
+1. **单行布局设计**：采用传统的列表显示方式，每行一个聊天室卡片
+2. **固定高度**：卡片高度设为60px，确保一致的视觉效果
+3. **全宽显示**：卡片宽度设为100%，充分利用屏幕空间
+4. **紧凑间距**：优化各元素间距，在有限高度内显示完整信息
+
+### 使用的技术栈
+- **React Native**：FlatList单列布局
+- **React Native Paper**：Avatar、Surface、Text组件
+- **TypeScript**：严格的类型检查
+
+### 修改的文件
+- **前端页面**：`app/(tabs)/messages/index.tsx`
+
+### 技术细节
+1. **卡片尺寸设置**：
+   ```typescript
+   messageCard: {
+     height: 60,
+     width: '100%',
+     padding: 12,
+   }
+   ```
+
+2. **单列布局配置**：
+   ```typescript
+   <FlatList
+     // 移除 numColumns 和 columnWrapperStyle
+     // 恢复默认的单列布局
+   />
+   ```
+
+3. **头像尺寸调整**：
+   ```typescript
+   <Avatar.Image size={20} source={{ uri: item.logo || item.sender?.avatar }} />
+   ```
+
+### 解决的问题
+- ✅ 采用更传统的列表显示方式，符合用户习惯
+- ✅ 固定高度确保界面一致性
+- ✅ 充分利用屏幕宽度，显示更多信息
+- ✅ 保持紧凑的布局设计
+
+# 2024-12-19 Chatroom Controller 重构和功能完善
+
+### 会话的日期和时间（用于分割不同的会话）和主要目的
+**时间**: 2024-12-19
+**主要目的**: 重构chatroom相关的后端controller，将分散的chatroom功能集中到专门的chatController中，并完善与chatroom相关的消息控制功能。
+
+### 完成的主要任务
+1. **创建专门的chatController**:
+   - 新建 `backend/src/controllers/chatController.ts`
+   - 包含完整的chatroom管理功能：创建、删除、更新、成员管理、消息处理等
+
+2. **重构clubController**:
+   - 移除直接的ChatRoom操作代码
+   - 简化chatroom创建和删除逻辑
+   - 保持与chatController的松耦合
+
+3. **完善messageController**:
+   - 添加chatroom消息相关功能
+   - 支持获取聊天室消息、发送消息、编辑消息等
+   - 增强消息权限控制
+
+4. **更新路由配置**:
+   - 重构 `backend/src/routes/chatRoomRoutes.ts` 使用新的controller
+   - 更新 `backend/src/routes/messageRoutes.ts` 添加新的消息路由
+   - 添加认证中间件保护
+
+5. **更新前端API配置**:
+   - 扩展 `app/services/api.ts` 支持新的chatroom和message API
+   - 修复 `shared/config/api.ts` 中的API端点配置
+
+### 关键决策和解决方案
+1. **模块化设计**: 将chatroom功能从clubController中分离，创建专门的chatController，提高代码的可维护性和单一职责原则
+2. **统一错误处理**: 在chatController中实现统一的错误处理机制
+3. **类型安全**: 修复TypeScript类型错误，确保代码的类型安全
+4. **权限控制**: 在消息发送和编辑时添加适当的权限检查
+5. **数据一致性**: 确保chatroom和club之间的数据关联一致性
+
+### 使用的技术栈
+- **后端**: Express.js, Mongoose, TypeScript
+- **前端**: React Native, TypeScript
+- **数据库**: MongoDB
+- **认证**: JWT
+
+### 修改了哪些文件
+**新建文件**:
+- `backend/src/controllers/chatController.ts` - 专门的chatroom控制器
+
+**修改文件**:
+- `backend/src/controllers/clubController.ts` - 移除chatroom相关代码，简化逻辑
+- `backend/src/controllers/messageController.ts` - 添加chatroom消息功能
+- `backend/src/routes/chatRoomRoutes.ts` - 重构路由使用新controller
+- `backend/src/routes/messageRoutes.ts` - 添加新的消息路由
+- `app/services/api.ts` - 扩展API配置
+- `shared/config/api.ts` - 修复API端点配置
+
+### 架构改进
+1. **职责分离**: chatroom功能现在有专门的controller处理，符合单一职责原则
+2. **代码复用**: 通过统一的API接口，前端可以更方便地调用chatroom功能
+3. **可扩展性**: 新的架构更容易添加新的chatroom相关功能
+4. **维护性**: 代码结构更清晰，便于后续维护和调试
+

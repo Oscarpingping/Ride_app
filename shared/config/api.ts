@@ -77,6 +77,12 @@ export const API_ENDPOINTS = {
     CONVERSATIONS: '/api/messages/conversations',
     SEND: '/api/messages/send',
   },
+  
+  // 聊天室相关
+  CHATROOMS: {
+    BASE: '/api/chatrooms',
+    ONE: (id: string) => `/api/chatrooms/${id}`,
+  },
 };
 
 // HTTP请求配置

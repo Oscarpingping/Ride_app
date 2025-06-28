@@ -9,6 +9,7 @@ import userRoutes from './routes/userRoutes';
 import clubRoutes from './routes/clubRoutes';
 import messageRoutes from './routes/messageRoutes';
 import webRoutes from './routes/web';
+import chatRoomRoutes from './routes/chatRoomRoutes';
 import { SYSTEM_CONFIG } from './config/system';
 
 const app = express();
@@ -53,6 +54,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/clubs', clubRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/', webRoutes);
+app.use('/api/chatrooms', chatRoomRoutes);
 
 // 添加静态文件服务
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {

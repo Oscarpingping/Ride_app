@@ -38,6 +38,7 @@ export interface IClub extends Document {
       user: mongoose.Types.ObjectId;
       message?: string;           // 申请留言
       createdAt: Date;
+      messageId?: mongoose.Types.ObjectId;
     }>;
     history: Array<{
       user: mongoose.Types.ObjectId;
@@ -47,6 +48,7 @@ export interface IClub extends Document {
       handledBy: mongoose.Types.ObjectId;  // 处理人
       createdAt: Date;
       handledAt: Date;
+      messageId?: mongoose.Types.ObjectId;
     }>;
   };
   cardData?: string;                  // 俱乐部数据卡片，根据type不同而不同
@@ -145,6 +147,11 @@ const clubSchema = new Schema<IClub>(
             type: Date,
             default: Date.now,
             required: true
+          },
+          messageId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Message',
+            default: null
           }
         }],
         history: [{
@@ -178,6 +185,11 @@ const clubSchema = new Schema<IClub>(
             type: Date,
             default: Date.now,
             required: true
+          },
+          messageId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Message',
+            default: null
           }
         }]
       },
@@ -247,6 +259,22 @@ clubSchema.pre('save', async function(next) {
     if (!this.joinRequests) {
       this.joinRequests = { pending: [], history: [] };
     }
+  }
+  next();
+});
+
+// 在 clubSchema 定义后添加自动同步钩子
+clubSchema.post('save', async function(doc, next) {
+  if (doc.chatRoom) {
+    const ChatRoom = mongoose.model('ChatRoom');
+    await ChatRoom.findByIdAndUpdate(
+      doc.chatRoom,
+      {
+        name: doc.name,
+        logo: doc.logo,
+        members: doc.members
+      }
+    );
   }
   next();
 });

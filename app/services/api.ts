@@ -1,4 +1,4 @@
-import { getApiBaseUrl, buildApiUrl, API_ENDPOINTS } from '../../shared/config/api';
+import { buildApiUrl, API_ENDPOINTS } from '../../shared/config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 设置认证token
@@ -131,6 +131,31 @@ export const messageAPI = {
   getMessages: () => request(API_ENDPOINTS.MESSAGES.BASE),
   getConversations: () => request(API_ENDPOINTS.MESSAGES.CONVERSATIONS),
   sendMessage: (messageData: any) => request(API_ENDPOINTS.MESSAGES.SEND, 'POST', messageData),
+  getChatRoomMessages: (chatRoomId: string, limit = 50, offset = 0) => 
+    request(`${API_ENDPOINTS.MESSAGES.BASE}/chatroom/${chatRoomId}?limit=${limit}&offset=${offset}`),
+  sendChatRoomMessage: (chatRoomId: string, messageData: any) => 
+    request(`${API_ENDPOINTS.MESSAGES.BASE}/chatroom/${chatRoomId}`, 'POST', messageData),
+  editMessage: (messageId: string, content: string) => 
+    request(`${API_ENDPOINTS.MESSAGES.BASE}/${messageId}`, 'PUT', { content }),
+  deleteMessage: (messageId: string) => 
+    request(`${API_ENDPOINTS.MESSAGES.BASE}/${messageId}`, 'DELETE'),
+};
+
+// 聊天室相关API
+export const chatRoomAPI = {
+  getUserChatRooms: (userId: string) => request(`${API_ENDPOINTS.CHATROOMS.BASE}?userId=${userId}`),
+  getChatRoom: (id: string) => request(API_ENDPOINTS.CHATROOMS.ONE(id)),
+  createChatRoom: (chatRoomData: any) => request(API_ENDPOINTS.CHATROOMS.BASE, 'POST', chatRoomData),
+  updateChatRoom: (id: string, chatRoomData: any) => request(API_ENDPOINTS.CHATROOMS.ONE(id), 'PUT', chatRoomData),
+  deleteChatRoom: (id: string) => request(API_ENDPOINTS.CHATROOMS.ONE(id), 'DELETE'),
+  addMember: (chatRoomId: string, userId: string) => 
+    request(`${API_ENDPOINTS.CHATROOMS.BASE}/${chatRoomId}/members`, 'POST', { userId }),
+  removeMember: (chatRoomId: string, userId: string) => 
+    request(`${API_ENDPOINTS.CHATROOMS.BASE}/${chatRoomId}/members`, 'DELETE', { userId }),
+  getChatRoomMessages: (chatRoomId: string, limit = 50, offset = 0) => 
+    request(`${API_ENDPOINTS.CHATROOMS.BASE}/${chatRoomId}/messages?limit=${limit}&offset=${offset}`),
+  sendMessage: (chatRoomId: string, messageData: any) => 
+    request(`${API_ENDPOINTS.CHATROOMS.BASE}/${chatRoomId}/messages`, 'POST', messageData),
 };
 
 // 导出默认的request函数供其他地方使用

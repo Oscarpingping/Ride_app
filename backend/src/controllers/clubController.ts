@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Club } from '../models/Club';
-import { ChatRoom } from '../models/ChatRoom';
 import { User } from '../models/User';
+import { ChatRoom } from '../models/ChatRoom';
 //import { IUser } from '../models/User';
 import { uploadImage } from '../services/uploadService';
 import mongoose from 'mongoose';
@@ -92,10 +92,10 @@ export const createClub = async (req: Request, res: Response): Promise<Response>
       description,
       type,
       location,
-      isPrivate,
       tags,
       rules,
       contactEmail,
+      isPrivate = false,
       createChatRoom = false // 默认不创建聊天室
     } = req.body;
 
@@ -136,7 +136,6 @@ export const createClub = async (req: Request, res: Response): Promise<Response>
     const randomStr = Math.random().toString(36).substring(2, 5); // 3个随机英文和数字字符
     const clubId = `${baseName}-${randomStr}`;
 
-    // 创建俱乐部
     const club = new Club({
       clubId,
       name,
@@ -158,19 +157,25 @@ export const createClub = async (req: Request, res: Response): Promise<Response>
 
     // 根据选项决定是否创建聊天室
     if (createChatRoom) {
-      // 创建聊天室
-      const chatRoom = new ChatRoom({
-        name: `${name} Chat`,
-        type: 'club',
-        club: club._id,
-        members: [userId]
-      });
+      try {
+        // 直接创建聊天室
+        const chatRoom = new ChatRoom({
+          name: `${name} Chat`,
+          type: 'club',
+          club: club._id,
+          members: [userId]
+        });
 
-      // 保存聊天室
-      await chatRoom.save();
+        // 保存聊天室
+        await chatRoom.save();
 
-      // 更新俱乐部的聊天室引用
-      club.chatRoom = chatRoom._id;
+        // 更新俱乐部的聊天室引用
+        club.chatRoom = chatRoom._id;
+        console.log(`[ClubController] Chatroom ${chatRoom._id} created successfully for club ${club._id}`);
+      } catch (error) {
+        console.error('[ClubController] Error creating chatroom:', error);
+        // 继续创建俱乐部，不因为聊天室创建失败而中断
+      }
     }
 
     // 处理图片上传
@@ -628,7 +633,14 @@ export const deleteClub = async (req: Request, res: Response): Promise<Response>
 
     // 删除聊天室
     if (club.chatRoom) {
-      await ChatRoom.findByIdAndDelete(club.chatRoom, { session });
+      try {
+        // 直接调用chatController的删除方法，不通过模拟的Request/Response
+        await ChatRoom.findByIdAndDelete(club.chatRoom, { session });
+        console.log(`[ClubController] Chatroom ${club.chatRoom} deleted successfully`);
+      } catch (error) {
+        console.error('[ClubController] Error deleting chatroom:', error);
+        // 继续删除俱乐部，不因为聊天室删除失败而中断
+      }
     }
 
     await Club.findByIdAndDelete(req.params.id, { session });
