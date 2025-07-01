@@ -163,7 +163,8 @@ export const createClub = async (req: Request, res: Response): Promise<Response>
           name: `${name} Chat`,
           type: 'club',
           club: club._id,
-          members: [userId]
+          members: [userId],
+          logo: club.logo // 使用俱乐部的logo
         });
 
         // 保存聊天室
@@ -171,7 +172,7 @@ export const createClub = async (req: Request, res: Response): Promise<Response>
 
         // 更新俱乐部的聊天室引用
         club.chatRoom = chatRoom._id;
-        console.log(`[ClubController] Chatroom ${chatRoom._id} created successfully for club ${club._id}`);
+        // console.log(`[ClubController] Chatroom ${chatRoom._id} created successfully for club ${club._id}`);
       } catch (error) {
         console.error('[ClubController] Error creating chatroom:', error);
         // 继续创建俱乐部，不因为聊天室创建失败而中断
@@ -203,6 +204,32 @@ export const createClub = async (req: Request, res: Response): Promise<Response>
 
     // 保存俱乐部
     await club.save();
+
+    // 在俱乐部数据写入数据库后，同步更新关联聊天室的logo
+    if (club.logo && club.chatRoom) {
+      try {
+        await ChatRoom.findByIdAndUpdate(club.chatRoom, { logo: club.logo });
+        // console.log(`[ClubController] Chatroom logo updated for club ${club._id}`);
+        
+        // 通知聊天室所有成员logo已更新
+        const io = req.app.get('io');
+        if (io) {
+          io.to(club.chatRoom.toString()).emit('chatroom_info_updated', {
+            chatRoomId: club.chatRoom.toString(),
+            updates: { logo: club.logo },
+            timestamp: new Date()
+          });
+          // console.log(`[ClubController] Chatroom logo update notification sent to room ${club.chatRoom}`);
+        }
+      } catch (error) {
+        console.error('[ClubController] Error updating chatroom logo:', error);
+      }
+    }
+
+    // 如果是俱乐部聊天室，更新俱乐部的chatRoom引用
+    if (clubId) {
+      await Club.findByIdAndUpdate(clubId, { chatRoom: club.chatRoom });
+    }
 
     return res.status(201).json({
       success: true,
@@ -512,11 +539,11 @@ export const getJoinRequests = async (req: Request, res: Response): Promise<Resp
 
 export const updateClub = async (req: Request, res: Response): Promise<Response> => {
   // 调试日志，输出前端请求信息
-  console.log('[updateClub] method:', req.method);
-  console.log('[updateClub] url:', req.url);
-  console.log('[updateClub] headers:', req.headers);
-  console.log('[updateClub] body:', req.body);
-  console.log('[updateClub] files:', req.files);
+  // console.log('[updateClub] method:', req.method);
+  // console.log('[updateClub] url:', req.url);
+  // console.log('[updateClub] headers:', req.headers);
+  // console.log('[updateClub] body:', req.body);
+  // console.log('[updateClub] files:', req.files);
   try {
     const { id } = req.params;
     const {
@@ -582,6 +609,27 @@ export const updateClub = async (req: Request, res: Response): Promise<Response>
 
     await club.save();
 
+    // 在俱乐部数据写入数据库后，同步更新关联聊天室的logo
+    if (club.logo && club.chatRoom) {
+      try {
+        await ChatRoom.findByIdAndUpdate(club.chatRoom, { logo: club.logo });
+        // console.log(`[ClubController] Chatroom logo updated for club ${club._id}`);
+        
+        // 通知聊天室所有成员logo已更新
+        const io = req.app.get('io');
+        if (io) {
+          io.to(club.chatRoom.toString()).emit('chatroom_info_updated', {
+            chatRoomId: club.chatRoom.toString(),
+            updates: { logo: club.logo },
+            timestamp: new Date()
+          });
+          // console.log(`[ClubController] Chatroom logo update notification sent to room ${club.chatRoom}`);
+        }
+      } catch (error) {
+        console.error('[ClubController] Error updating chatroom logo:', error);
+      }
+    }
+
     return res.json({
       success: true,
       data: club
@@ -636,7 +684,7 @@ export const deleteClub = async (req: Request, res: Response): Promise<Response>
       try {
         // 直接调用chatController的删除方法，不通过模拟的Request/Response
         await ChatRoom.findByIdAndDelete(club.chatRoom, { session });
-        console.log(`[ClubController] Chatroom ${club.chatRoom} deleted successfully`);
+        // console.log(`[ClubController] Chatroom ${club.chatRoom} deleted successfully`);
       } catch (error) {
         console.error('[ClubController] Error deleting chatroom:', error);
         // 继续删除俱乐部，不因为聊天室删除失败而中断

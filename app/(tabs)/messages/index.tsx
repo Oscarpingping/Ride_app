@@ -6,8 +6,48 @@ import { useAuth } from '../../context/AuthContext';
 import { useMessages } from '../../context/MessageContext';
 import { formatDistanceToNow } from 'date-fns';
 import { chatRoomAPI } from '../../services/api';
+import { ChatRoom } from '../../../shared/types/club';
+import { ImageService } from '../../services/imageService';
 
 const { width: screenWidth } = Dimensions.get('window');
+
+// 前端扩展的ChatRoom类型，用于消息页面显示
+interface ChatRoomDisplay {
+  _id: string;
+  club: {
+    _id: string;
+    name: string;
+    logo?: string;
+  };
+  name: string;
+  logo?: string;
+  type: 'club' | 'group' | 'activity' | 'other';
+  members: string[];
+  messages: any[];
+  lastMessage?: {
+    sender: string;
+    content: string;
+    type: string;
+    timestamp: string;
+  };
+  lastMessageId?: {
+    _id: string;
+    content: string;
+    type: string;
+    timestamp: string;
+    senderId: {
+      _id: string;
+      name: string;
+      avatar?: string;
+    };
+  };
+  lastMessageTime?: string;
+  maxMembers: number;
+  autoDeleteDuration: number;
+  createdAt: string;
+  updatedAt: string;
+  isUnread?: boolean;
+}
 
 const FILTERS = [
   { key: 'all', label: 'All' },
@@ -23,30 +63,31 @@ export default function MessagesScreen() {
   const { messages, loading, error, getMessages } = useMessages();
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('all');
-  const [chatRooms, setChatRooms] = useState<any[]>([]);
+  const [chatRooms, setChatRooms] = useState<ChatRoomDisplay[]>([]);
   const [loadingChatRooms, setLoadingChatRooms] = useState(false);
-  const [combinedList, setCombinedList] = useState<any[]>([]);
+  const [combinedList, setCombinedList] = useState<ChatRoomDisplay[]>([]);
 
   const userId = currentUser?._id;
 
   const fetchChatRooms = useCallback(async () => {
     if (!userId) {
-      console.log('[UI] No userId, skipping fetchChatRooms.');
+      // console.log('[UI] No userId, skipping fetchChatRooms.');
       return;
     }
     setLoadingChatRooms(true);
     setRefreshing(true);
     try {
-      console.log(`[UI] Fetching chatrooms for userId: ${userId}`);
-      const data = await chatRoomAPI.getUserChatRooms(userId);
-      console.log('[UI] chatRoomAPI.getUserChatRooms 返回值:', data);
+      // console.log(`[UI] Fetching chatrooms for userId: ${userId}`);
+      const response = await chatRoomAPI.getUserChatRooms(userId);
+      // console.log('[UI] chatRoomAPI.getUserChatRooms 返回值:', JSON.stringify(response, null, 2));
 
-      let chatRoomList: any[] = [];
-      if (Array.isArray(data)) {
-        chatRoomList = data;
-      } else if (data && Array.isArray(data.data)) {
-        chatRoomList = data.data;
+      let chatRoomList: ChatRoomDisplay[] = [];
+      if (response && typeof response === 'object' && 'success' in response && response.success) {
+        chatRoomList = (response as any).data || [];
+      } else if (Array.isArray(response)) {
+        chatRoomList = response;
       }
+      // console.log('[UI] 处理后的chatRoomList:', JSON.stringify(chatRoomList, null, 2));
       setChatRooms(chatRoomList);
     } catch (e) {
       console.error('[UI] Error fetching chatrooms:', e);
@@ -64,8 +105,8 @@ export default function MessagesScreen() {
 
   useEffect(() => {
     const allItems = [...chatRooms].sort((a, b) => {
-      const timeA = new Date(a.lastMessageId?.timestamp || a.timestamp || 0);
-      const timeB = new Date(b.lastMessageId?.timestamp || b.timestamp || 0);
+      const timeA = new Date(a.lastMessageTime || a.lastMessageId?.timestamp || a.lastMessage?.timestamp || 0);
+      const timeB = new Date(b.lastMessageTime || b.lastMessageId?.timestamp || b.lastMessage?.timestamp || 0);
       return timeB.getTime() - timeA.getTime();
     });
     setCombinedList(allItems);
@@ -111,8 +152,8 @@ export default function MessagesScreen() {
     return true;
   });
 
-  const renderItem = ({ item }) => {
-    const isChatRoom = !!item.lastMessageId || item.type === 'chatroom';
+  const renderItem = ({ item }: { item: ChatRoomDisplay }) => {
+    const isChatRoom = !!item.lastMessageId || item.type === 'club' || item.type === 'group' || item.type === 'activity';
     
     // 安全的时间格式化函数
     const formatTime = (timestamp: any) => {
@@ -126,23 +167,58 @@ export default function MessagesScreen() {
         return '--';
       }
     };
+
+    // 获取logo URL的逻辑
+    const getLogoUrl = (item: ChatRoomDisplay) => {
+      // console.log('[UI] getLogoUrl - item:', JSON.stringify({
+      //   id: item._id,
+      //   name: item.name,
+      //   logo: item.logo,
+      //   clubLogo: item.club?.logo,
+      //   senderAvatar: item.lastMessageId?.senderId?.avatar
+      // }, null, 2));
+      
+      // 优先使用聊天室自己的logo
+      if (item.logo) {
+        const fullUrl = ImageService.getImageUrl(item.logo);
+        // console.log('[UI] 使用聊天室logo:', fullUrl);
+        return fullUrl;
+      }
+      // 使用俱乐部的logo
+      if (item.club?.logo) {
+        const fullUrl = ImageService.getImageUrl(item.club.logo);
+        // console.log('[UI] 使用俱乐部logo:', fullUrl);
+        return fullUrl;
+      }
+      // 最后使用发送者头像作为备选
+      if (item.lastMessageId?.senderId?.avatar) {
+        const fullUrl = ImageService.getImageUrl(item.lastMessageId.senderId.avatar);
+        // console.log('[UI] 使用发送者头像:', fullUrl);
+        return fullUrl;
+      }
+      // 默认头像
+      // console.log('[UI] 使用默认头像');
+      return 'https://i.pravatar.cc/150?u=default';
+    };
     
     return (
       <TouchableOpacity onPress={() => isChatRoom && router.push(`/messages/${item._id}`)}>
         <Surface style={styles.messageCard} elevation={1}>
           <View style={styles.messageHeader}>
-            <Avatar.Image size={40} source={{ uri: item.logo || item.sender?.avatar }} />
+            <Avatar.Image size={40} source={{ uri: getLogoUrl(item) }} />
             <View style={styles.messageInfo}>
-              <Text variant="titleMedium" style={styles.chatroomName}>{item.name || item.sender?.name || 'Unknown'}</Text>
+              <Text variant="titleMedium" style={styles.chatroomName}>
+                {item.name || item.club?.name || 'Unknown'}
+              </Text>
               <Text variant="bodySmall" style={styles.timestamp}>
-                {formatTime(item.lastMessageId?.timestamp || item.timestamp)}
+                {formatTime(item.lastMessageTime || item.lastMessageId?.timestamp || item.lastMessage?.timestamp)}
               </Text>
             </View>
             {/* 新消息蓝点 */}
             {item.isUnread && <View style={styles.unreadDot} />}
           </View>
           <Text variant="bodyMedium" style={styles.messageContent} numberOfLines={1}>
-            {item.lastMessageId?.content || item.content || 'No content'}
+            {item.lastMessageId?.content || item.lastMessage?.content || 'No content'}
           </Text>
         </Surface>
       </TouchableOpacity>
@@ -169,7 +245,7 @@ export default function MessagesScreen() {
       <FlatList
         data={combinedList}
         renderItem={renderItem}
-        keyExtractor={(item) => item._id || item.id}
+        keyExtractor={(item) => item._id}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         refreshing={refreshing || loadingChatRooms}
         onRefresh={fetchChatRooms}

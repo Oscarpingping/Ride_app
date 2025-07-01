@@ -66,18 +66,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (data: LoginRequest): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('AuthContext: Starting login process');
+      // console.log('AuthContext: Starting login process');
       setState(prev => ({ ...prev, isLoading: true, error: null, currentUser: prev.currentUser ?? null }));
       
       const response = await UserApi.login(data);
-      console.log('AuthContext: UserApi.login response:', {
-        success: response.success,
-        error: response.error,
-        hasData: !!response.data
-      });
+      // console.log('AuthContext: UserApi.login response:', {
+      //   success: response.success,
+      //   error: response.error,
+      //   hasData: !!response.data
+      // });
 
       if (response.success && response.data?.user) {
-        console.log('AuthContext: Login successful, saving token');
+        // console.log('AuthContext: Login successful, saving token');
         await AsyncStorage.setItem('token', response.data.token);
         const user = response.data.user ?? null;
         setState({
@@ -86,10 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
           error: null,
         });
-        console.log('AuthContext: State updated successfully');
+        // console.log('AuthContext: State updated successfully');
         return { success: true };
       } else {
-        console.log('AuthContext: Login failed with response:', response);
+        // console.log('AuthContext: Login failed with response:', response);
         const errorMsg = response.error || '登录失败，请检查邮箱和密码';
         setState({
           currentUser: null,
@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: errorMsg };
       }
     } catch (error) {
-      console.error('AuthContext: Login exception:', error);
+      // console.error('AuthContext: Login exception:', error);
       const errorMsg = '登录过程中发生错误，请稍后重试';
       setState({
         currentUser: null,

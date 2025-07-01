@@ -37,6 +37,7 @@ export interface ChatRoom {
   _id: string;
   club: string;
   name: string;
+  logo?: string;                   // 聊天室logo
   type: 'club' | 'group' | 'activity' | 'other';
   members: string[];
   messages: ChatMessage[];

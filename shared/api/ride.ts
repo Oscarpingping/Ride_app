@@ -58,11 +58,11 @@ const apiRequest = async (
   retryCount = 0
 ): Promise<any> => {
   try {
-    console.log(`🚀 API Request [${options.method || 'GET'}] ${url}:`, {
-      headers: options.headers,
-      body: options.body ? JSON.parse(options.body as string) : undefined,
-      retryCount
-    });
+    // console.log(`🚀 API Request [${options.method || 'GET'}] ${url}:`, {
+    //   headers: options.headers,
+    //   body: options.body ? JSON.parse(options.body as string) : undefined,
+    //   retryCount
+    // });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), HTTP_CONFIG.TIMEOUT);
@@ -76,20 +76,20 @@ const apiRequest = async (
     
     const responseData = await response.json();
     
-    console.log(`✅ API Response [${response.status}] ${url}:`, responseData);
+    // console.log(`✅ API Response [${response.status}] ${url}:`, responseData);
     
     return responseData;
   } catch (error: unknown) {
-    console.error(`❌ API Error [${options.method || 'GET'}] ${url}:`, {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      type: error instanceof Error ? error.name : typeof error,
-      retryCount
-    });
+    // console.error(`❌ API Error [${options.method || 'GET'}] ${url}:`, {
+    //   error: error instanceof Error ? error.message : 'Unknown error',
+    //   type: error instanceof Error ? error.name : typeof error,
+    //   retryCount
+    // });
     
     // 如果是网络错误且还有重试次数，则重试
     if (retryCount < HTTP_CONFIG.RETRY_ATTEMPTS && 
         (error instanceof TypeError || (error instanceof Error && error.name === 'AbortError'))) {
-      console.log(`🔄 Retrying request (${retryCount + 1}/${HTTP_CONFIG.RETRY_ATTEMPTS})...`);
+      // console.log(`🔄 Retrying request (${retryCount + 1}/${HTTP_CONFIG.RETRY_ATTEMPTS})...`);
       await new Promise(resolve => setTimeout(resolve, HTTP_CONFIG.RETRY_DELAY));
       return apiRequest(url, options, retryCount + 1);
     }

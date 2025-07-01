@@ -10,9 +10,6 @@ router.use(auth);
 // 获取用户的所有消息
 router.get('/', messageController.getUserMessages);
 
-// 获取特定骑行活动的消息
-router.get('/ride/:rideId', messageController.getRideMessages);
-
 // 发送消息
 router.post('/send', messageController.sendMessage);
 

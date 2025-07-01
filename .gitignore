@@ -4,6 +4,9 @@
 node_modules/
 **/node_modules/
 
+#个人文件
+**/uploads/
+
 # Build outputs
 dist/
 **/dist/

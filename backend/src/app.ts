@@ -1,8 +1,9 @@
 import express from 'express';
 import path from 'path';
-
 import cors from 'cors';
 import 'dotenv/config';
+import http from 'http';
+import { initSocketIO } from './socket';
 import authRoutes from './routes/auth';
 import rideRoutes from './routes/rides';
 import userRoutes from './routes/userRoutes';
@@ -10,6 +11,7 @@ import clubRoutes from './routes/clubRoutes';
 import messageRoutes from './routes/messageRoutes';
 import webRoutes from './routes/web';
 import chatRoomRoutes from './routes/chatRoomRoutes';
+import socketRoutes from './routes/socketRoutes';
 import { SYSTEM_CONFIG } from './config/system';
 
 const app = express();
@@ -21,21 +23,21 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
-app.use(express.json({ limit: '50mb' }));  // 增加请求体大小限制
-//app.use(requestLogger);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // 全局请求日志
-app.use((req, _res, next) => {
-  console.log('[GLOBAL] method:', req.method, 'url:', req.url, 'content-type:', req.headers['content-type']);
+app.use((_req, _res, next) => {
+  // console.log('[GLOBAL] method:', req.method, 'url:', req.url, 'content-type:', req.headers['content-type']);
   next();
 });
 
 // 健康检查路由
-app.get('/health', (req, res) => {
-  console.log(`[${new Date().toISOString()}] 🏥 健康检查请求:
-    IP: ${req.ip}
-    Headers: ${JSON.stringify(req.headers, null, 2)}
-  `);
+app.get('/health', (_req, res) => {
+  // console.log(`[${new Date().toISOString()}] 🏥 健康检查请求:
+  //   IP: ${req.ip}
+  //   Headers: ${JSON.stringify(req.headers, null, 2)}
+  // `);
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -53,8 +55,9 @@ app.use('/api/rides', rideRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/clubs', clubRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/', webRoutes);
+app.use('/api/web', webRoutes);
 app.use('/api/chatrooms', chatRoomRoutes);
+app.use('/api/socket', socketRoutes);
 
 // 添加静态文件服务
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
@@ -62,6 +65,10 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
   etag: true, // 启用ETag
   lastModified: true // 启用Last-Modified
 }));
+
+// socket.io集成（已拆分到socket.ts）
+const server = http.createServer(app);
+initSocketIO(server, app);
 
 // 错误处理中间件
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
@@ -73,10 +80,9 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 // 使用系统配置中的API端口
-const PORT = SYSTEM_CONFIG.SERVER.API_PORT;
-//app.listen(PORT, () => {
-app.listen(5001, '0.0.0.0', () => {
-  console.log(`API Server is running on port ${PORT}`);
+const PORT = Number(process.env.API_PORT) || 5001;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
 export default app; 

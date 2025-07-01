@@ -90,6 +90,7 @@ export const HTTP_CONFIG = {
   TIMEOUT: 10000, // 10秒超时
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000, // 1秒重试延迟
+  LOG_REQUESTS: false, // 关闭请求日志
 };
 
 // 构建完整的API URL
@@ -97,14 +98,16 @@ export const buildApiUrl = (endpoint: string): string => {
   const baseUrl = getApiBaseUrl();
   const fullUrl = `${baseUrl}${endpoint}`;
   
-  // 添加调试日志
-  console.log('🔍 API Request Details:', {
-    fullUrl,
-    baseUrl,
-    endpoint,
-    environment: __DEV__ ? 'development' : 'production',
-    platform: typeof window === 'undefined' ? 'react-native' : 'web'
-  });
+  // 添加请求日志
+  if (HTTP_CONFIG.LOG_REQUESTS) {
+    // console.log('🔍 API Request Details:', {
+    //   baseUrl: getApiBaseUrl(),
+    //   endpoint,
+    //   environment: __DEV__ ? 'development' : 'production',
+    //   fullUrl,
+    //   platform: typeof window === 'undefined' ? 'react-native' : 'web'
+    // });
+  }
   
   return fullUrl;
 };

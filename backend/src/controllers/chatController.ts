@@ -5,6 +5,12 @@ import { Message } from '../models/Message';
 import { AuthRequest } from '../types/auth';
 import { ApiResponse } from '../../../shared/api/types';
 import mongoose from 'mongoose';
+import { Server as SocketIOServer } from 'socket.io';
+
+// 获取socket.io实例的辅助函数
+const getIO = (req: Request): SocketIOServer => {
+  return req.app.get('io');
+};
 
 // 错误处理函数
 const handleError = (error: any, res: Response, operation: string): Response => {
@@ -14,6 +20,13 @@ const handleError = (error: any, res: Response, operation: string): Response => 
     error: error.message || 'Internal server error'
   } as ApiResponse);
 };
+
+// Socket.io事件类型定义
+interface ChatRoomEvent {
+  type: 'message' | 'member_joined' | 'member_left' | 'message_edited' | 'message_deleted' | 'typing' | 'stop_typing';
+  data: any;
+  timestamp: Date;
+}
 
 export const chatController = {
   // 获取指定chatroom的最新数据
@@ -73,7 +86,7 @@ export const chatController = {
   // 创建聊天室（从clubController迁移）
   async createChatRoom(req: Request, res: Response): Promise<Response> {
     try {
-      const { name, type, clubId, members, maxMembers = 100 } = req.body;
+      const { name, type, clubId, members, maxMembers = 100, logo } = req.body;
 
       if (!name || !type || !members || !Array.isArray(members)) {
         return res.status(400).json({
@@ -87,7 +100,8 @@ export const chatController = {
         type,
         club: clubId || null,
         members,
-        maxMembers
+        maxMembers,
+        logo: logo || null
       });
 
       await chatRoom.save();
@@ -100,6 +114,14 @@ export const chatController = {
       const populatedChatRoom = await ChatRoom.findById(chatRoom._id)
         .populate('members', 'name avatar')
         .populate('club', 'name logo');
+
+      // 通知所有成员新的聊天室已创建
+      const io = getIO(req);
+      members.forEach(memberId => {
+        io.to(memberId.toString()).emit('chatroom_created', {
+          chatRoom: populatedChatRoom
+        });
+      });
 
       return res.status(201).json({
         success: true,
@@ -128,6 +150,14 @@ export const chatController = {
             error: 'ChatRoom not found'
           } as ApiResponse);
         }
+
+        // 通知所有成员聊天室将被删除
+        const io = getIO(req);
+        chatRoom.members.forEach(memberId => {
+          io.to(memberId.toString()).emit('chatroom_deleted', {
+            chatRoomId: id
+          });
+        });
 
         // 如果是俱乐部聊天室，清除俱乐部的chatRoom引用
         if (chatRoom.club) {
@@ -200,6 +230,25 @@ export const chatController = {
         .populate('members', 'name avatar')
         .populate('club', 'name logo');
 
+      // 通知聊天室所有成员有新成员加入
+      const io = getIO(req);
+      const event: ChatRoomEvent = {
+        type: 'member_joined',
+        data: {
+          chatRoomId,
+          userId,
+          chatRoom: updatedChatRoom
+        },
+        timestamp: new Date()
+      };
+      
+      io.to(chatRoomId).emit('chatroom_event', event);
+      
+      // 通知新成员已成功加入
+      io.to(userId.toString()).emit('member_added', {
+        chatRoom: updatedChatRoom
+      });
+
       return res.json({
         success: true,
         data: updatedChatRoom
@@ -245,6 +294,26 @@ export const chatController = {
         .populate('members', 'name avatar')
         .populate('club', 'name logo');
 
+      // 通知聊天室所有成员有成员离开
+      const io = getIO(req);
+      const event: ChatRoomEvent = {
+        type: 'member_left',
+        data: {
+          chatRoomId,
+          userId,
+          chatRoom: updatedChatRoom
+        },
+        timestamp: new Date()
+      };
+      
+      io.to(chatRoomId).emit('chatroom_event', event);
+      
+      // 通知被移除的成员
+      io.to(userId.toString()).emit('member_removed', {
+        chatRoomId,
+        chatRoom: updatedChatRoom
+      });
+
       return res.json({
         success: true,
         data: updatedChatRoom
@@ -283,7 +352,7 @@ export const chatController = {
     }
   },
 
-  // 发送消息到聊天室
+  // 发送消息到聊天室（集成socket.io实时推送）
   async sendMessage(req: AuthRequest, res: Response): Promise<Response> {
     try {
       if (!req.user) {
@@ -337,6 +406,19 @@ export const chatController = {
       const populatedMessage = await Message.findById(message._id)
         .populate('senderId', 'name avatar');
 
+      // 通过socket.io实时推送给聊天室所有成员
+      const io = getIO(req);
+      const event: ChatRoomEvent = {
+        type: 'message',
+        data: {
+          message: populatedMessage,
+          chatRoomId
+        },
+        timestamp: new Date()
+      };
+      
+      io.to(chatRoomId).emit('chatroom_event', event);
+
       return res.status(201).json({
         success: true,
         data: populatedMessage
@@ -372,12 +454,43 @@ export const chatController = {
         .populate('members', 'name avatar')
         .populate('club', 'name logo');
 
+      // 通知所有成员聊天室信息已更新
+      const io = getIO(req);
+      chatRoom.members.forEach(memberId => {
+        io.to(memberId.toString()).emit('chatroom_updated', {
+          chatRoom: updatedChatRoom
+        });
+      });
+
       return res.json({
         success: true,
         data: updatedChatRoom
       } as ApiResponse);
     } catch (error: any) {
       return handleError(error, res, 'Update chatroom');
+    }
+  },
+
+  // 获取聊天室在线成员
+  async getOnlineMembers(req: Request, res: Response): Promise<Response> {
+    try {
+      const { chatRoomId } = req.params;
+      const io = getIO(req);
+      
+      // 获取聊天室中所有连接的socket
+      const roomSockets = await io.in(chatRoomId).fetchSockets();
+      const onlineUserIds = roomSockets.map(socket => socket.data.userId).filter(Boolean);
+
+      return res.json({
+        success: true,
+        data: {
+          chatRoomId,
+          onlineMembers: onlineUserIds,
+          count: onlineUserIds.length
+        }
+      } as ApiResponse);
+    } catch (error: any) {
+      return handleError(error, res, 'Get online members');
     }
   }
 }; 

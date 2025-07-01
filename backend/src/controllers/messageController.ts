@@ -4,6 +4,19 @@ import { ChatRoom } from '../models/ChatRoom';
 import { AuthRequest } from '../types/auth';
 import { ApiResponse } from '../../../shared/api/types';
 import { User } from '../models/User';
+import { Server as SocketIOServer } from 'socket.io';
+
+// 获取socket.io实例的辅助函数
+const getIO = (req: Request): SocketIOServer => {
+  return req.app.get('io');
+};
+
+// Socket.io事件类型定义
+interface MessageEvent {
+  type: 'message_edited' | 'message_deleted' | 'message_received' | 'typing' | 'stop_typing';
+  data: any;
+  timestamp: Date;
+}
 
 export const messageController = {
   // 获取用户的所有消息
@@ -38,27 +51,7 @@ export const messageController = {
     }
   },
 
-  // 获取特定骑行活动的消息
-  async getRideMessages(req: Request, res: Response): Promise<Response> {
-    try {
-      const messages = await Message.find({ rideId: req.params.rideId })
-        .populate('senderId', 'name email')
-        .populate('receiverId', 'name email')
-        .sort({ timestamp: -1 });
-
-      return res.json({
-        success: true,
-        data: messages
-      } as ApiResponse);
-    } catch (error: any) {
-      return res.status(500).json({ 
-        success: false,
-        error: error.message 
-      } as ApiResponse);
-    }
-  },
-
-  // 发送消息
+  // 发送消息（集成socket.io实时推送）
   async sendMessage(req: AuthRequest, res: Response): Promise<Response> {
     try {
       if (!req.user) {
@@ -81,6 +74,23 @@ export const messageController = {
         .populate('senderId', 'name email')
         .populate('receiverId', 'name email');
 
+      // 通过socket.io实时推送给接收者
+      if (populatedMessage) {
+        const io = getIO(req);
+        const event: MessageEvent = {
+          type: 'message_received',
+          data: {
+            message: populatedMessage
+          },
+          timestamp: new Date()
+        };
+        
+        // 如果是私聊消息，推送给接收者
+        if (populatedMessage.receiverId && populatedMessage.receiverType === 'user') {
+          io.to(populatedMessage.receiverId._id.toString()).emit('message_event', event);
+        }
+      }
+
       return res.status(201).json({
         success: true,
         data: populatedMessage
@@ -93,7 +103,7 @@ export const messageController = {
     }
   },
 
-  // 删除消息
+  // 删除消息（集成socket.io实时通知）
   async deleteMessage(req: AuthRequest, res: Response): Promise<Response> {
     try {
       if (!req.user) {
@@ -121,6 +131,27 @@ export const messageController = {
       }
 
       await message.deleteOne();
+
+      // 通过socket.io实时通知相关用户消息已删除
+      const io = getIO(req);
+      const event: MessageEvent = {
+        type: 'message_deleted',
+        data: {
+          messageId: req.params.id,
+          chatRoomId: message.chatroomId,
+          receiverId: message.receiverId
+        },
+        timestamp: new Date()
+      };
+
+      // 如果是聊天室消息，通知聊天室所有成员
+      if (message.chatroomId) {
+        io.to(message.chatroomId.toString()).emit('message_event', event);
+      } else if (message.receiverId) {
+        // 如果是私聊消息，通知接收者
+        io.to(message.receiverId.toString()).emit('message_event', event);
+      }
+
       return res.json({ 
         success: true,
         message: 'Message deleted successfully' 
@@ -198,34 +229,24 @@ export const messageController = {
     try {
       const { chatRoomId } = req.params;
       const { limit = 50, offset = 0 } = req.query;
-
-      const chatRoom = await ChatRoom.findById(chatRoomId);
-      if (!chatRoom) {
-        return res.status(404).json({
-          success: false,
-          error: 'ChatRoom not found'
-        } as ApiResponse);
-      }
-
       const messages = await Message.find({ chatroomId: chatRoomId })
-        .populate('senderId', 'name name_sid avatar')
         .sort({ timestamp: -1 })
+        .skip(Number(offset))
         .limit(Number(limit))
-        .skip(Number(offset));
-
+        .populate('senderId', 'name name_sid avatar');
       return res.json({
         success: true,
         data: messages
-      } as ApiResponse);
+      });
     } catch (error: any) {
       return res.status(500).json({
         success: false,
         error: error.message
-      } as ApiResponse);
+      });
     }
   },
 
-  // 发送消息到聊天室
+  // 发送消息到聊天室（集成socket.io实时推送）
   async sendChatRoomMessage(req: AuthRequest, res: Response): Promise<Response> {
     try {
       if (!req.user) {
@@ -236,7 +257,7 @@ export const messageController = {
       }
 
       const { chatRoomId } = req.params;
-      const { content, type = 'text' } = req.body;
+      const { content, type = 'text', mentions = [] } = req.body;
 
       if (!content) {
         return res.status(400).json({
@@ -278,7 +299,8 @@ export const messageController = {
         timestamp: new Date(),
         receiverType: 'club', // 聊天室消息的接收者类型
         senderNameSid: user.name_sid,
-        receiverNameSid: chatRoom.name
+        receiverNameSid: chatRoom.name,
+        mentions: mentions // 添加提及的用户ID列表
       });
 
       await message.save();
@@ -290,6 +312,19 @@ export const messageController = {
 
       const populatedMessage = await Message.findById(message._id)
         .populate('senderId', 'name name_sid avatar');
+
+      // 通过socket.io实时推送给聊天室所有成员
+      const io = getIO(req);
+      const event: MessageEvent = {
+        type: 'message_received',
+        data: {
+          message: populatedMessage,
+          chatRoomId
+        },
+        timestamp: new Date()
+      };
+      
+      io.to(chatRoomId).emit('message_event', event);
 
       return res.status(201).json({
         success: true,
@@ -303,7 +338,7 @@ export const messageController = {
     }
   },
 
-  // 编辑消息
+  // 编辑消息（集成socket.io实时同步）
   async editMessage(req: AuthRequest, res: Response): Promise<Response> {
     try {
       if (!req.user) {
@@ -366,9 +401,69 @@ export const messageController = {
       const updatedMessage = await Message.findById(id)
         .populate('senderId', 'name name_sid avatar');
 
+      // 通过socket.io实时通知相关用户消息已编辑
+      const io = getIO(req);
+      const event: MessageEvent = {
+        type: 'message_edited',
+        data: {
+          message: updatedMessage,
+          chatRoomId: message.chatroomId,
+          receiverId: message.receiverId
+        },
+        timestamp: new Date()
+      };
+
+      // 如果是聊天室消息，通知聊天室所有成员
+      if (message.chatroomId) {
+        io.to(message.chatroomId.toString()).emit('message_event', event);
+      } else if (message.receiverId) {
+        // 如果是私聊消息，通知接收者
+        io.to(message.receiverId.toString()).emit('message_event', event);
+      }
+
       return res.json({
         success: true,
         data: updatedMessage
+      } as ApiResponse);
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        error: error.message
+      } as ApiResponse);
+    }
+  },
+
+  // 处理打字状态（实时通知）
+  async handleTypingStatus(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Not authenticated'
+        } as ApiResponse);
+      }
+
+      const { chatRoomId, isTyping } = req.body;
+
+      const io = getIO(req);
+      const event: MessageEvent = {
+        type: isTyping ? 'typing' : 'stop_typing',
+        data: {
+          userId: req.user._id,
+          userName: (req.user as any).name || 'Unknown User',
+          chatRoomId
+        },
+        timestamp: new Date()
+      };
+
+      // 通知聊天室其他成员用户的打字状态
+      if (chatRoomId) {
+        io.to(chatRoomId).emit('message_event', event);
+      }
+
+      return res.json({
+        success: true,
+        message: isTyping ? 'Typing status sent' : 'Stop typing status sent'
       } as ApiResponse);
     } catch (error: any) {
       return res.status(500).json({

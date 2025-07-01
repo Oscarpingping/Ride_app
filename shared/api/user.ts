@@ -35,11 +35,11 @@ const apiRequest = async (
       password: logBody.password ? '******' : undefined
     } : undefined;
 
-    console.log(`🚀 API Request [${options.method || 'GET'}] ${url}:`, {
-      headers: options.headers,
-      body: sanitizedBody,
-      retryCount
-    });
+    // console.log(`🚀 API Request [${options.method || 'GET'}] ${url}:`, {
+    //   headers: options.headers,
+    //   body: sanitizedBody,
+    //   retryCount
+    // });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), HTTP_CONFIG.TIMEOUT);
@@ -54,29 +54,29 @@ const apiRequest = async (
     const responseData = await response.json();
     
     // 记录响应信息
-    console.log(`✅ API Response [${response.status}] ${url}:`, {
-      ...responseData,
-      data: responseData.data ? {
-        ...responseData.data,
-        token: responseData.data.token ? '******' : undefined,
-        refreshToken: responseData.data.refreshToken ? '******' : undefined
-      } : undefined
-    });
+    // console.log(`✅ API Response [${response.status}] ${url}:`, {
+    //   ...responseData,
+    //   data: responseData.data ? {
+    //     ...responseData.data,
+    //     token: responseData.data.token ? '******' : undefined,
+    //     refreshToken: responseData.data.refreshToken ? '******' : undefined
+    //   } : undefined
+    // });
     
     // 直接返回响应数据，让调用者处理错误
     return responseData;
   } catch (error: unknown) {
-    console.error(`❌ API Error [${options.method || 'GET'}] ${url}:`, {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      type: error instanceof Error ? error.name : typeof error,
-      stack: error instanceof Error ? error.stack : undefined,
-      retryCount
-    });
+    // console.error(`❌ API Error [${options.method || 'GET'}] ${url}:`, {
+    //   error: error instanceof Error ? error.message : 'Unknown error',
+    //   type: error instanceof Error ? error.name : typeof error,
+    //   stack: error instanceof Error ? error.stack : undefined,
+    //   retryCount
+    // });
     
     // 如果是网络错误且还有重试次数，则重试
     if (retryCount < HTTP_CONFIG.RETRY_ATTEMPTS && 
         (error instanceof TypeError || (error instanceof Error && error.name === 'AbortError'))) {
-      console.log(`🔄 Retrying request (${retryCount + 1}/${HTTP_CONFIG.RETRY_ATTEMPTS})...`);
+      // console.log(`🔄 Retrying request (${retryCount + 1}/${HTTP_CONFIG.RETRY_ATTEMPTS})...`);
       await new Promise(resolve => setTimeout(resolve, HTTP_CONFIG.RETRY_DELAY));
       return apiRequest(url, options, retryCount + 1);
     }

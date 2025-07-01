@@ -19,7 +19,7 @@ export interface Chat {
 export interface ChatMessage {
   _id: string;
   chatId: string;
-  sender: User;
+  senderId: User;
   content: string;                 // 消息内容：文本或URL
   type: 'text' | 'emoji' | 'image' | 'video' | 'audio' | 'file' | 'url';
   metadata?: {

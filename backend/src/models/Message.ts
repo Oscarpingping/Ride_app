@@ -12,6 +12,7 @@ export interface IMessage extends Document {
   relatedClubId?: mongoose.Types.ObjectId;     // 相关俱乐部
   relatedActivityId?: mongoose.Types.ObjectId; // 相关活动
   chatroomId?: mongoose.Types.ObjectId; // 关联chatroom
+  mentions?: mongoose.Types.ObjectId[]; // 提及的用户ID列表
   metadata?: {
     fileName?: string;
     fileSize?: number;
@@ -51,7 +52,7 @@ const messageSchema = new Schema<IMessage>(
     receiverId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
       index: true
     },
     receiverType: {
@@ -97,6 +98,10 @@ const messageSchema = new Schema<IMessage>(
       ref: 'ChatRoom',
       default: null
     },
+    mentions: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }],
     metadata: {
       fileName: { type: String },
       fileSize: { type: Number },
