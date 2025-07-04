@@ -1,5 +1,5 @@
 import { Ride } from '../types/ride';
-import { User } from '../types/user';
+import { User } from '../types/user-unified';
 
 export const validateRide = (ride: Partial<Ride>): string[] => {
   const errors: string[] = [];

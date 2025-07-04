@@ -9,26 +9,23 @@ import { User, UserSummary, UserPublic, SocketUser, AuthUser } from '../shared/t
 
 // 模拟数据验证
 const mockUser: User = {
-  _id: '507f1f77bcf86cd799439011',
-  name: 'John Doe',
-  email: 'john@example.com',
-  avatar: 'https://example.com/avatar.jpg',
-  bio: 'A passionate cyclist',
+  _id: '1',
+  userId: '1',
+  name: 'Test User',
+  name_sid: 'test_user',
+  email: 'test@example.com',
+  avatar: '',
+  bio: 'Test bio',
   rating: 4.5,
-  ridesJoined: 15,
-  ridesCreated: 3,
-  createdRides: ['507f1f77bcf86cd799439012'],
-  joinedRides: ['507f1f77bcf86cd799439013'],
-  clubs: [{
-    club: '507f1f77bcf86cd799439014',
-    joinedAt: new Date('2024-01-01')
-  }],
-  emergencyContact: {
-    name: 'Jane Doe',
-    phone: '+1234567890'
-  },
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-15')
+  ridesJoined: 10,
+  ridesCreated: 5,
+  createdRides: [],
+  joinedRides: [],
+  clubs: [],
+  canCreateClub: true,
+  emergencyContact: { name: 'Emergency Contact', phone: '123-456-7890' },
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 // 类型转换验证

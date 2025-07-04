@@ -39,7 +39,7 @@ export default function ResetPasswordScreen() {
       if (response.success) {
         setError('Password reset successful! Redirecting to login...');
         setTimeout(() => {
-          router.replace('/authRoot');
+          router.replace('/auth_index');
         }, 2000);
       } else {
         setError(response.error || 'Failed to reset password');

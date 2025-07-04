@@ -1,3 +1,5 @@
+import { User } from './user-unified';
+
 // 通用类型定义
 export interface Location {
   latitude: number;
@@ -13,16 +15,17 @@ export interface Participant {
   status: 'pending' | 'accepted' | 'rejected';
 }
 
-export interface BaseActivity {
+export interface Activity {
   id: string;
   title: string;
   description: string;
-  date: string;
-  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
-  creatorId: string;
+  location: Location;
+  startTime: Date;
+  endTime: Date;
   creator: User;
   participants: Participant[];
-  location: Location;
+  maxParticipants: number;
+  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   createdAt: Date;
   updatedAt: Date;
 }

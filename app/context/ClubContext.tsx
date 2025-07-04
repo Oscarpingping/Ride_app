@@ -90,6 +90,8 @@ export function ClubProvider({ children }: { children: ReactNode }) {
       const response = await clubApi.createClub({
         name: club.name,
         description: club.description,
+        type: 'biking', // 默认类型，可以从表单获取
+        isPrivate: false, // 默认公开，可以从表单获取
         contactEmail: '', // TODO: Add contact email to the form
       });
       if (response.success && response.data) {
@@ -133,7 +135,7 @@ export function ClubProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       setError(null);
-      const response = await clubApi.joinClub(id);
+      const response = await clubApi.requestJoinClub(id, { message: '' });
       if (response.success && response.data) {
         setClubs(prev => prev.map(club => 
           club._id === id ? response.data! : club

@@ -172,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.success && response.data) {
         setState(prev => ({
           ...prev,
-          currentUser: response.data,
+          currentUser: response.data || null,
           isLoading: false,
           error: null,
         }));

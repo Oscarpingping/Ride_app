@@ -1,3 +1,5 @@
+import { TerrainType, PaceLevel, DifficultyLevel } from '../shared/types/ride';
+
 export interface RideFilters {
   gender?: 'All' | 'Women Only' | 'Men Only' | 'Non-binary Only';
   ageRange?: {
@@ -25,8 +27,6 @@ export interface SortOption {
   field: 'date' | 'distance' | 'rating' | 'participants';
   order: 'asc' | 'desc';
 }
-
-import { TerrainType, PaceLevel, DifficultyLevel } from './ride';
 
 export interface FilterState extends RideFilters {
   sort: SortOption;

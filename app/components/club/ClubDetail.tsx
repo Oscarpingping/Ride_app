@@ -25,7 +25,7 @@ export function ClubDetail({ club, onRefresh }: ClubDetailProps) {
   console.log('currentUser:', currentUser);
   console.log('club.founder:', club.founder);
   console.log('club.founder_id:', club.founder._id);
-  console.log('club.founder_userId:', club.founder.userId);
+  console.log('club.founder_id:', club.founder._id);
   const handleEditClub = () => {
     openModal('UPDATE_COVER', { club });
   };
@@ -128,7 +128,7 @@ export function ClubDetail({ club, onRefresh }: ClubDetailProps) {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {club.admins.map(admin => (
-              <View key={admin.userId} style={styles.member}>
+              <View key={admin._id} style={styles.member}>
                 <Avatar.Text
                   size={40}
                   label={admin.name_sid.split(' ').map(n => n[0]).join('')}
@@ -153,7 +153,7 @@ export function ClubDetail({ club, onRefresh }: ClubDetailProps) {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {club.members.map(member => (
-              <View key={member.userId} style={styles.member}>
+              <View key={member._id} style={styles.member}>
                 <Avatar.Text
                   size={40}
                   label={member.name_sid.split(' ').map(n => n[0]).join('')}
@@ -182,6 +182,10 @@ export function ClubDetail({ club, onRefresh }: ClubDetailProps) {
         visible={!!modalType}
         type={modalType}
         onDismiss={closeModal}
+        club={club}
+        onUpdate={(updatedClub: Club) => {
+          if (onRefresh) onRefresh();
+        }}
       />
     </ScrollView>
   );

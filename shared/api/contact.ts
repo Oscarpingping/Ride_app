@@ -1,5 +1,5 @@
 import { Contact } from '../types/contact';
-import { User } from '../types/user';
+import { User } from '../types/user-unified';
 import { API_BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

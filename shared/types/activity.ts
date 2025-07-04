@@ -1,4 +1,5 @@
-import { Location, User, Participant } from './common';
+import { Location, Participant } from './common';
+import { User } from './user-unified';
 
 // 活动状态
 export enum ActivityStatus {
