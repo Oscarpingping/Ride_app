@@ -28,10 +28,10 @@ interface ApiResponse<T> {
 }
 
 export class ImageService {
-  private static readonly SUPPORTED_FORMATS: ImageFormat[] = ['jpg', 'jpeg', 'png', 'gif'];
-  private static readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  private static readonly baseUrl = process.env.EXPO_PUBLIC_NGINX_URL || 'http://192.168.1.50';
-  private static readonly API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.50:5001';
+  private static readonly SUPPORTED_FORMATS: ImageFormat[] = (process.env.EXPO_PUBLIC_SUPPORTED_IMAGE_FORMATS || 'jpg,jpeg,png,gif').split(',') as ImageFormat[];
+  private static readonly MAX_FILE_SIZE = parseInt(process.env.EXPO_PUBLIC_MAX_IMAGE_SIZE || '5242880'); // 5MB default
+  private static readonly baseUrl = process.env.EXPO_PUBLIC_NGINX_URL;
+  private static readonly API_URL = process.env.EXPO_PUBLIC_API_URL;
 
   static getImageUrl(path: string): string {
     if (!path) return '';
