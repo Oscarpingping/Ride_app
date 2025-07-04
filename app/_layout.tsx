@@ -9,15 +9,16 @@ import { MessageProvider } from './context/MessageContext';
 import { RideProvider } from './context/RideContext';
 import { ClubProvider } from './context/ClubContext';
 import { ClubModalProvider } from './context/ClubModalContext';
+import { Colors } from '../constants/Colors';
 
 // 自定义主题
 const theme = {
   ...MD3LightTheme,
   colors: {
     ...MD3LightTheme.colors,
-    primary: '#7c3aed', // 主色调
-    secondary: '#a78bfa', // 次要色调
-    tertiary: '#c4b5fd', // 第三色调
+    primary: Colors.light.tint, // 主色调
+    secondary: '#4a6b47', // 次要色调
+    tertiary: '#6b8a68', // 第三色调
     background: '#f5f5f5', // 背景色
   },
 };

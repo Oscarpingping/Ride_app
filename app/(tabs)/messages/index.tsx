@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { chatRoomAPI } from '../../services/api';
 import { ChatRoom } from '../../../shared/types/club';
 import { ImageService } from '../../services/imageService';
+import { Colors } from '../../../constants/Colors';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -207,19 +208,21 @@ export default function MessagesScreen() {
           <View style={styles.messageHeader}>
             <Avatar.Image size={40} source={{ uri: getLogoUrl(item) }} />
             <View style={styles.messageInfo}>
-              <Text variant="titleMedium" style={styles.chatroomName}>
-                {item.name || item.club?.name || 'Unknown'}
-              </Text>
-              <Text variant="bodySmall" style={styles.timestamp}>
-                {formatTime(item.lastMessageTime || item.lastMessageId?.timestamp || item.lastMessage?.timestamp)}
+              <View style={styles.nameTimeRow}>
+                <Text variant="titleMedium" style={styles.chatroomName}>
+                  {item.name || item.club?.name || 'Unknown'}
+                </Text>
+                <Text variant="bodySmall" style={styles.timestamp}>
+                  {formatTime(item.lastMessageTime || item.lastMessageId?.timestamp || item.lastMessage?.timestamp)}
+                </Text>
+              </View>
+              <Text variant="bodyMedium" style={styles.messageContent} numberOfLines={1}>
+                {item.lastMessageId?.content || item.lastMessage?.content || 'No content'}
               </Text>
             </View>
             {/* 新消息蓝点 */}
             {item.isUnread && <View style={styles.unreadDot} />}
           </View>
-          <Text variant="bodyMedium" style={styles.messageContent} numberOfLines={1}>
-            {item.lastMessageId?.content || item.lastMessage?.content || 'No content'}
-          </Text>
         </Surface>
       </TouchableOpacity>
     );
@@ -272,7 +275,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
     marginBottom: 12,
     fontWeight: 'bold',
-    color: '#234421',
+    color: Colors.light.tint,
     alignSelf: 'center',
   },
   filterBar: {
@@ -291,10 +294,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   filterBtnActive: {
-    backgroundColor: '#234421',
+    backgroundColor: Colors.light.tint,
   },
   filterText: {
-    color: '#234421',
+    color: Colors.light.tint,
     fontWeight: '500',
   },
   filterTextActive: {
@@ -308,7 +311,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     backgroundColor: '#fff',
-    height: 60,
+    minHeight: 70,
     width: screenWidth,  // 屏幕宽度
     // 其他宽度选项：
     // width: '100%',           // 占满父容器宽度
@@ -326,19 +329,24 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
   },
+  nameTimeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   chatroomName: {
     fontWeight: 'bold',
     fontSize: 14,
   },
   timestamp: {
     color: '#666',
-    marginTop: 1,
     fontSize: 11,
   },
   messageContent: {
-    marginBottom: 2,
-    color: '#222',
+    color: '#666',
     fontSize: 12,
+    flex: 1,
   },
   unreadDot: {
     width: 8,

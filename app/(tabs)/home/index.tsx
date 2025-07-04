@@ -24,6 +24,7 @@ import { FilterState, defaultFilterState } from '../../../shared/types/filters';
 import { useRides } from '../../context/RideContext';
 import { RideCard } from '../../components/RideCard';
 import { useClubs } from '../../context/ClubContext';
+import { Colors } from '../../../constants/Colors';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -177,8 +178,9 @@ export default function HomeScreen() {
 
         <FAB
           icon="plus"
-          style={styles.fab}
+          style={[styles.fab, { backgroundColor: Colors.light.tint }]}
           onPress={() => router.push('/createRide')}
+          color="#fff"
         />
       </View>
 

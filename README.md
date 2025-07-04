@@ -198,6 +198,59 @@ echo 'DATABASE_URL="mongodb://your-mongo-uri"' >> .env
 
 npx prisma generate
 
+## 2024-12-19 Socket.IO 调试信息清理
+
+### 主要目的
+清理 Socket.IO 相关的调试日志信息，减少控制台输出噪音，提升开发体验。
+
+### 完成的主要任务
+1. 注释掉了后端 Socket.IO 服务器的连接调试信息
+2. 关闭了前端 Socket 连接状态的调试日志
+3. 保留了错误日志用于问题排查
+
+### 关键决策和解决方案
+1. 将频繁的连接日志改为注释状态，便于需要时启用调试
+2. 保留了 `console.error` 错误日志，确保问题排查能力
+3. 统一处理了前后端的 Socket 调试信息
+
+### 使用的技术栈
+- Socket.IO (后端)
+- Socket.IO Client (前端)
+- TypeScript
+
+### 修改的文件
+- `backend/src/socket.ts` - 注释了 6 处 Socket.IO 调试日志
+- `app/messages/[chatRoomId].tsx` - 注释了 2 处 Socket 连接状态日志
+- `shared/services/socket.ts` - 注释了 2 处 Socket 连接状态日志
+
+## 2024-12-19 Profile 页面 Club 卡片布局优化
+
+### 主要目的
+优化 Profile 页面中 MyClubGrid 组件的卡片布局，增加卡片宽度和 logo 大小，提升视觉效果和用户体验。
+
+### 完成的主要任务
+1. 增加了 club card 的宽度和高度，更好地适应屏幕宽度
+2. 放大了 club logo 的尺寸，从 48x48 增加到 60x60
+3. 调整了卡片间距和内边距，提升整体布局美观度
+4. 优化了文字大小和间距，提升可读性
+
+### 关键决策和解决方案
+1. 将卡片边距从 8px 增加到 12px，提供更好的视觉分离
+2. 卡片高度从 180px 增加到 200px，为更大的 logo 和文字提供空间
+3. logo 尺寸增加 25%，从 48x48 增加到 60x60，提升视觉重要性
+4. 调整了内边距和圆角，保持设计一致性
+
+### 使用的技术栈
+- React Native
+- React Native Paper
+- TypeScript
+- StyleSheet
+
+### 修改的文件
+- `app/(profile)/MyClubGrid.tsx` - 调整了卡片尺寸和间距常量
+- `app/components/MiniClubCard.tsx` - 优化了卡片样式、logo 尺寸和文字布局
+- `app/(tabs)/profile/index.tsx` - 调整了 section 和 clubsContainer 的内边距，优化整体布局
+
 ## 2024-12-19 聊天室类型定义重构和安全性优化
 
 ### 主要目的
@@ -226,7 +279,7 @@ npx prisma generate
 3. **渐进式重构**：保持向后兼容性，逐步迁移到新的类型定义
 
 ### 使用的技术栈
-- TypeScript 类型系统
+   - TypeScript 类型系统
 - React Native
 - Mongoose (后端数据模型)
 - Express.js API

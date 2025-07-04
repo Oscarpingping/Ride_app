@@ -33,13 +33,13 @@ export class SocketService {
 
   private setupListeners() {
     this.socket.on(SOCKET_EVENTS.CONNECT, () => {
-      console.log('Connected to socket server');
+      // console.log('Connected to socket server');
       // this.reconnectAttempts = 0;
       this.syncMessageQueue();
     });
 
     this.socket.on(SOCKET_EVENTS.DISCONNECT, () => {
-      console.log('Disconnected from socket server');
+      // console.log('Disconnected from socket server');
     });
 
     this.socket.on('error', (error) => {

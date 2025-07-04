@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, StyleSheet, FlatList, Pressable, KeyboardAvoidingView, Platform, RefreshControl, Alert, ScrollView } from 'react-native';
+import { View, StyleSheet, FlatList, Pressable, KeyboardAvoidingView, Platform, RefreshControl, Alert, ScrollView, Keyboard, Dimensions, Animated } from 'react-native';
 import { Appbar, Avatar, Text, TextInput, ActivityIndicator, IconButton, Surface } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { getApiBaseUrl } from '../../shared/config/api';
 import { ChatRoom } from '../../shared/types/club';
 import { ChatMessage } from '../../shared/types/entities';
 import { ImageService } from '../services/imageService';
+import { Colors } from '../../constants/Colors';
 
 // 成员类型定义
 interface ChatMember {
@@ -55,9 +56,12 @@ export default function ChatRoomScreen() {
   
   // 附件菜单相关状态
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const flatListRef = useRef<FlatList>(null);
   const textInputRef = useRef<any>(null);
+  const keyboardAnimation = useRef(new Animated.Value(0)).current;
 
   // 初始化Socket.IO连接
   useEffect(() => {
@@ -72,7 +76,7 @@ export default function ChatRoomScreen() {
     });
 
     newSocket.on('connect', () => {
-      console.log('[Socket] Connected to server');
+      // console.log('[Socket] Connected to server');
       setIsConnected(true);
       
       // 用户登录
@@ -83,7 +87,7 @@ export default function ChatRoomScreen() {
     });
 
     newSocket.on('disconnect', () => {
-      console.log('[Socket] Disconnected from server');
+      // console.log('[Socket] Disconnected from server');
       setIsConnected(false);
     });
 
@@ -221,7 +225,7 @@ export default function ChatRoomScreen() {
       
       if (response && typeof response === 'object' && 'success' in response && response.success) {
         // 消息已通过Socket.IO实时推送，不需要手动添加到列表
-        setInputText('');
+      setInputText('');
         setShowMentionSuggestions(false);
         setMentionSuggestions([]);
         
@@ -351,6 +355,59 @@ export default function ChatRoomScreen() {
     setTimeout(() => setIsRecording(false), 1000);
   }, []);
 
+  // 处理输入框聚焦
+  const handleInputFocus = useCallback(() => {
+    // 输入框聚焦时滚动到最新消息
+    setTimeout(() => {
+      if (flatListRef.current && messages.length > 0) {
+        flatListRef.current.scrollToOffset({ offset: 0, animated: true });
+      }
+    }, 300);
+  }, [messages.length]);
+
+  // 键盘监听
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
+      setKeyboardVisible(true);
+      setKeyboardHeight(event.endCoordinates.height);
+      
+      // Android 键盘动画
+      if (Platform.OS === 'android') {
+        Animated.timing(keyboardAnimation, {
+          toValue: event.endCoordinates.height,
+          duration: 250,
+          useNativeDriver: false,
+        }).start();
+      }
+      
+      // 键盘显示时滚动到最新消息
+      setTimeout(() => {
+        if (flatListRef.current && messages.length > 0) {
+          flatListRef.current.scrollToOffset({ offset: 0, animated: true });
+        }
+      }, 100);
+    });
+
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
+      
+      // Android 键盘隐藏动画
+      if (Platform.OS === 'android') {
+        Animated.timing(keyboardAnimation, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: false,
+        }).start();
+      }
+    });
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, [messages.length, keyboardAnimation]);
+
   // 初始化数据
   useEffect(() => {
     fetchChatRoomData();
@@ -379,7 +436,10 @@ export default function ChatRoomScreen() {
         // 添加提及前的文本
         if (match.index > lastIndex) {
           parts.push(
-            <Text key={`text-${lastIndex}`} style={{ color: isMyMessage ? 'white' : 'black' }}>
+            <Text key={`text-${lastIndex}`} style={{ 
+              color: isMyMessage ? 'white' : 'black',
+              textAlign: isMyMessage ? 'right' : 'left'
+            }}>
               {content.substring(lastIndex, match.index)}
             </Text>
           );
@@ -393,7 +453,8 @@ export default function ChatRoomScreen() {
             key={`mention-${match.index}`} 
             style={{ 
               color: isMyMessage ? '#ffeb3b' : '#2196f3',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              textAlign: isMyMessage ? 'right' : 'left'
             }}
           >
             {match[0]}
@@ -406,21 +467,27 @@ export default function ChatRoomScreen() {
       // 添加剩余的文本
       if (lastIndex < content.length) {
         parts.push(
-          <Text key={`text-${lastIndex}`} style={{ color: isMyMessage ? 'white' : 'black' }}>
+          <Text key={`text-${lastIndex}`} style={{ 
+            color: isMyMessage ? 'white' : 'black',
+            textAlign: isMyMessage ? 'right' : 'left'
+          }}>
             {content.substring(lastIndex)}
           </Text>
         );
       }
       
       return parts.length > 0 ? parts : (
-        <Text style={{ color: isMyMessage ? 'white' : 'black' }}>
+        <Text style={{ 
+          color: isMyMessage ? 'white' : 'black',
+          textAlign: isMyMessage ? 'right' : 'left'
+        }}>
           {content}
         </Text>
       );
     };
 
     return (
-      <View style={[styles.messageRow, { justifyContent: isMyMessage ? 'flex-end' : 'flex-start' }]}> 
+      <View style={isMyMessage ? styles.myMessageRow : styles.theirMessageRow}> 
         {!isMyMessage && (
           <Avatar.Image 
             size={32} 
@@ -432,8 +499,10 @@ export default function ChatRoomScreen() {
           {!isMyMessage && (
             <Text style={styles.senderName}>{sender.name}</Text>
           )}
-          {renderMessageContent(item.content)}
-          {item.isEdited && <Text style={styles.editedText}> (edited)</Text>}
+          <View style={styles.messageContent}>
+            {renderMessageContent(item.content)}
+            {item.isEdited && <Text style={styles.editedText}> (edited)</Text>}
+          </View>
           <Text style={[styles.timestamp, { color: isMyMessage ? '#e0e0e0' : '#555' }]}> 
             {messageTime}
           </Text>
@@ -477,7 +546,7 @@ export default function ChatRoomScreen() {
               <Text style={styles.connectionText}>Offline</Text>
             </View>
           )}
-          <Appbar.Action icon="dots-vertical" onPress={() => {}} />
+        <Appbar.Action icon="dots-vertical" onPress={() => {}} />
         </View>
       </Appbar.Header>
 
@@ -570,32 +639,60 @@ export default function ChatRoomScreen() {
         </Surface>
       )}
 
+      {Platform.OS === 'ios' ? (
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior="padding"
         style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.select({ ios: 90, android: 0 })}
+          keyboardVerticalOffset={-insets.top}
+          enabled
       >
-        <View style={[styles.inputContainer, { paddingBottom: insets.bottom }]} onTouchStart={(e) => e.stopPropagation()}>
-          <IconButton icon="plus" size={24} onPress={handleAttachmentMenu} />
-          <TextInput
-            ref={textInputRef}
-            style={styles.textInput}
-            value={inputText}
-            onChangeText={handleTextChange}
-            placeholder="Type a message..."
-            multiline
-            disabled={isSending}
-            onSelectionChange={handleSelectionChange}
-            right={
-              <TextInput.Icon 
-                icon={isSending ? "loading" : "send"} 
-                onPress={handleSend}
-                disabled={isSending}
-              />
-            }
-          />
+          <View style={[styles.inputContainer, { paddingBottom: insets.bottom }]} onTouchStart={(e) => e.stopPropagation()}>
+            <IconButton icon="plus" size={24} onPress={handleAttachmentMenu} />
+             <TextInput
+              ref={textInputRef}
+                style={styles.textInput}
+                value={inputText}
+              onChangeText={handleTextChange}
+                placeholder="Type a message..."
+                multiline
+              disabled={isSending}
+              onSelectionChange={handleSelectionChange}
+              onFocus={handleInputFocus}
+              right={
+                <TextInput.Icon 
+                  icon={isSending ? "loading" : "send"} 
+                  onPress={handleSend}
+                  disabled={isSending}
+                />
+              }
+             />
         </View>
       </KeyboardAvoidingView>
+      ) : (
+        <Animated.View style={[styles.keyboardView, { marginBottom: keyboardAnimation }]}>
+          <View style={[styles.inputContainer, { paddingBottom: insets.bottom }]} onTouchStart={(e) => e.stopPropagation()}>
+            <IconButton icon="plus" size={24} onPress={handleAttachmentMenu} />
+            <TextInput
+              ref={textInputRef}
+              style={styles.textInput}
+              value={inputText}
+              onChangeText={handleTextChange}
+              placeholder="Type a message..."
+              multiline
+              disabled={isSending}
+              onSelectionChange={handleSelectionChange}
+              onFocus={handleInputFocus}
+              right={
+                <TextInput.Icon 
+                  icon={isSending ? "loading" : "send"} 
+                  onPress={handleSend}
+                  disabled={isSending}
+                />
+              }
+            />
+          </View>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -637,6 +734,7 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     width: '100%',
+    backgroundColor: '#f9f9f9',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -658,14 +756,33 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     maxWidth: '80%',
   },
+  myMessageRow: {
+    flexDirection: 'row',
+    marginVertical: 4,
+    maxWidth: '90%',
+    alignSelf: 'flex-end',
+  },
+  theirMessageRow: {
+    flexDirection: 'row',
+    marginVertical: 4,
+    maxWidth: '80%',
+    alignSelf: 'flex-start',
+  },
   messageBubble: {
     padding: 10,
     borderRadius: 15,
+    flexShrink: 1,
+  },
+  messageContent: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-end',
   },
   myMessage: {
-    backgroundColor: '#075e54',
+    backgroundColor: Colors.light.tint,
     alignSelf: 'flex-end',
     borderTopRightRadius: 5,
+    alignItems: 'flex-end',
   },
   theirMessage: {
     backgroundColor: 'white',

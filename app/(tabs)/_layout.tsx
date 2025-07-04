@@ -14,7 +14,7 @@ function ProfileTabIcon() {
   const { currentUser, isAuthenticated } = useAuth();
   if (isAuthenticated && currentUser?.name) {
     const initials = currentUser.name.substring(0, 2).toUpperCase();
-    return <Avatar.Text size={28} label={initials} style={{ backgroundColor: '#7c3aed' }} />;
+    return <Avatar.Text size={28} label={initials} style={{ backgroundColor: Colors.light.tint }} />;
   }
   // 未登录用户显示人形icon
   return <IconSymbol size={28} name="person.crop.circle" color="#888" />;

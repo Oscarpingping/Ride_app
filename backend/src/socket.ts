@@ -30,7 +30,7 @@ export function initSocketIO(server: any, app: Application): ExtendedSocketIOSer
   app.set('io', io);
 
   io.on('connection', (socket: Socket) => {
-    console.log(`[Socket.IO] New connection: ${socket.id}`);
+    // console.log(`[Socket.IO] New connection: ${socket.id}`);
 
     // 用户登录认证
     socket.on('login', async (userId: string) => {
@@ -57,7 +57,7 @@ export function initSocketIO(server: any, app: Application): ExtendedSocketIOSer
               joinedRooms: []
             });
 
-            console.log(`[Socket.IO] User ${user.name} (${userId}) logged in`);
+            // console.log(`[Socket.IO] User ${user.name} (${userId}) logged in`);
             
             // 通知用户登录成功
             socket.emit('login_success', {
@@ -85,7 +85,7 @@ export function initSocketIO(server: any, app: Application): ExtendedSocketIOSer
             onlineUser.joinedRooms.push(chatRoomId);
           }
 
-          console.log(`[Socket.IO] User ${socket.data.userName} joined room ${chatRoomId}`);
+          // console.log(`[Socket.IO] User ${socket.data.userName} joined room ${chatRoomId}`);
           
           // 通知房间其他成员有新用户加入
           socket.to(chatRoomId).emit('user_joined_room', {
@@ -130,7 +130,7 @@ export function initSocketIO(server: any, app: Application): ExtendedSocketIOSer
             onlineUser.joinedRooms = onlineUser.joinedRooms.filter(room => room !== chatRoomId);
           }
 
-          console.log(`[Socket.IO] User ${socket.data.userName} left room ${chatRoomId}`);
+          // console.log(`[Socket.IO] User ${socket.data.userName} left room ${chatRoomId}`);
           
           // 通知房间其他成员有用户离开
           socket.to(chatRoomId).emit('user_left_room', {
@@ -246,7 +246,7 @@ export function initSocketIO(server: any, app: Application): ExtendedSocketIOSer
             timestamp: new Date()
           });
           
-          console.log(`[Socket.IO] User ${socket.data.userNameSid || socket.data.userName} mentioned user ${data.userId} in room ${data.chatRoomId}`);
+          // console.log(`[Socket.IO] User ${socket.data.userNameSid || socket.data.userName} mentioned user ${data.userId} in room ${data.chatRoomId}`);
         }
       } catch (error) {
         console.error(`[Socket.IO] User mention event error:`, error);
@@ -274,7 +274,7 @@ export function initSocketIO(server: any, app: Application): ExtendedSocketIOSer
           // 从在线用户列表中移除
           onlineUsers.delete(userId);
           
-          console.log(`[Socket.IO] User ${socket.data.userName} (${userId}) disconnected`);
+          // console.log(`[Socket.IO] User ${socket.data.userName} (${userId}) disconnected`);
         }
       } catch (error) {
         console.error(`[Socket.IO] Disconnect error:`, error);

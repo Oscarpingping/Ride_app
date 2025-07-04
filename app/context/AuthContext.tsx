@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       } else {
         // console.log('AuthContext: Login failed with response:', response);
-        const errorMsg = response.error || '登录失败，请检查邮箱和密码';
+        const errorMsg = response.error || 'Login failed, please check your email and password';
         setState({
           currentUser: null,
           isAuthenticated: false,
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       // console.error('AuthContext: Login exception:', error);
-      const errorMsg = '登录过程中发生错误，请稍后重试';
+      const errorMsg = 'An error occurred during login, please try again later';
       setState({
         currentUser: null,
         isAuthenticated: false,

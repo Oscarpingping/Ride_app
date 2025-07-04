@@ -7,9 +7,9 @@ import { MiniClubCard } from '../components/MiniClubCard';
 import { ClubModals } from '../components/club/ClubModals';
 import { useClubModal } from '../context/ClubModalContext';
 
-const CARD_MARGIN = 8;
-const CARD_WIDTH = (Dimensions.get('window').width - CARD_MARGIN * 3) / 2;
-const CARD_HEIGHT = 180;
+const CARD_MARGIN = 10;
+const CARD_WIDTH = Dimensions.get('window').width - (CARD_MARGIN * 2);
+const CARD_HEIGHT = 200;
 
 interface MyClubGridProps {
   clubs: Club[];
@@ -44,6 +44,9 @@ export function MyClubGrid({ clubs, onCreateClub, onClubUpdate, canCreateClub = 
             key={club._id}
             club={club}
             onPress={() => handleClubPress(club)}
+            width={CARD_WIDTH}
+            height={CARD_HEIGHT}
+            margin={CARD_MARGIN}
           />
         ))}
         {canCreateClub && (
@@ -81,6 +84,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     padding: CARD_MARGIN,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   addCard: {
     width: CARD_WIDTH,

@@ -17,6 +17,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 import { ImageService } from '../../services/imageService';
 import { getInitials } from '../../utils/textUtils';
+import { Colors } from '../../../constants/Colors';
 
 
 export default function ProfileScreen() {
@@ -677,7 +678,7 @@ export default function ProfileScreen() {
           <Text style={styles.name}>{currentUser?.name}</Text>
           <Text style={styles.email}>{currentUser?.email}</Text>
         </View>
-        <Button mode="outlined" onPress={logout} style={styles.logoutButton}>
+        <Button mode="outlined" onPress={logout} style={styles.logoutButton} textColor={Colors.light.tint}>
           Logout
         </Button>
         <Button
@@ -701,6 +702,7 @@ export default function ProfileScreen() {
             setEditProfileModalVisible(true);
           }}
           style={styles.editButton}
+          buttonColor={Colors.light.tint}
         >
           Edit Profile
         </Button>
@@ -725,6 +727,8 @@ export default function ProfileScreen() {
             mode={activeTab === 'activities' ? 'contained' : 'outlined'}
             onPress={() => setActiveTab('activities')}
             style={styles.tabButton}
+            buttonColor={activeTab === 'activities' ? Colors.light.tint : undefined}
+            textColor={activeTab === 'activities' ? undefined : Colors.light.tint}
           >
             Activities
           </Button>
@@ -732,6 +736,8 @@ export default function ProfileScreen() {
             mode={activeTab === 'contacts' ? 'contained' : 'outlined'}
             onPress={() => setActiveTab('contacts')}
             style={styles.tabButton}
+            buttonColor={activeTab === 'contacts' ? Colors.light.tint : undefined}
+            textColor={activeTab === 'contacts' ? undefined : Colors.light.tint}
           >
             Contacts
           </Button>
@@ -739,6 +745,8 @@ export default function ProfileScreen() {
             mode={activeTab === 'clubs' ? 'contained' : 'outlined'}
             onPress={() => setActiveTab('clubs')}
             style={styles.tabButton}
+            buttonColor={activeTab === 'clubs' ? Colors.light.tint : undefined}
+            textColor={activeTab === 'clubs' ? undefined : Colors.light.tint}
           >
             Clubs
           </Button>
@@ -1048,6 +1056,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     marginLeft: 10,
+    marginBottom: 5,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -1169,6 +1178,7 @@ const styles = StyleSheet.create({
   },
   editButton: {
     marginLeft: 10,
+    marginTop: 5,
   },
   modalContent: {
     backgroundColor: 'white',

@@ -107,23 +107,23 @@ export default function CreateRideScreen() {
   const handleCreateRide = async () => {
     // 验证用户是否已登录
     if (!isAuthenticated || !currentUser) {
-      Alert.alert('错误', '请先登录后再创建活动');
+      Alert.alert('Error', 'Please login first before creating a ride');
       return;
     }
 
     // 验证必填字段
     if (!title.trim()) {
-      Alert.alert('错误', '请输入活动标题');
+      Alert.alert('Error', 'Please enter a ride title');
       return;
     }
 
     if (!description.trim()) {
-      Alert.alert('错误', '请输入活动描述');
+      Alert.alert('Error', 'Please enter a ride description');
       return;
     }
 
     if (!meetingPoint.address) {
-      Alert.alert('错误', '请选择集合地点');
+      Alert.alert('Error', 'Please select a meeting point');
       return;
     }
 
@@ -157,18 +157,18 @@ export default function CreateRideScreen() {
       const response = await RideApi.createRide(rideData);
 
       if (response.success) {
-        Alert.alert('成功', '活动创建成功！', [
+        Alert.alert('Success', 'Ride created successfully!', [
           {
-            text: '确定',
+            text: 'OK',
             onPress: () => router.push('/(tabs)/home'),
           },
         ]);
       } else {
-        Alert.alert('错误', response.error || '创建活动失败，请稍后重试');
+        Alert.alert('Error', response.error || 'Failed to create ride, please try again later');
       }
     } catch (error) {
       console.error('Create ride error:', error);
-      Alert.alert('错误', '创建活动时发生错误，请稍后重试');
+      Alert.alert('Error', 'An error occurred while creating the ride, please try again later');
     } finally {
       setIsCreating(false);
     }

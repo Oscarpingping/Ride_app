@@ -7,9 +7,12 @@ import { ImageService } from '../services/imageService';
 interface MiniClubCardProps {
   club: Club;
   onPress: () => void;
+  width?: number;
+  height?: number;
+  margin?: number;
 }
 
-export const MiniClubCard: React.FC<MiniClubCardProps> = ({ club, onPress }) => {
+export const MiniClubCard: React.FC<MiniClubCardProps> = ({ club, onPress, width, height, margin }) => {
   const getFounderName = () => {
     if (!club.founder) return '';
     if (typeof club.founder === 'string') return club.founder;
@@ -18,7 +21,18 @@ export const MiniClubCard: React.FC<MiniClubCardProps> = ({ club, onPress }) => 
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity 
+      style={[
+        styles.card, 
+        { 
+          width: width || styles.card.width, 
+          height: height || styles.card.height, 
+          margin: margin || styles.card.margin 
+        }
+      ]} 
+      onPress={onPress} 
+      activeOpacity={0.8}
+    >
       <Surface style={styles.surface} elevation={2}>
         {club.logo ? (
           <Image source={{ uri: ImageService.getImageUrl(club.logo) }} style={styles.logo} resizeMode="cover" />
@@ -41,36 +55,37 @@ export const MiniClubCard: React.FC<MiniClubCardProps> = ({ club, onPress }) => 
 
 const styles = StyleSheet.create({
   card: {
-    width: (Dimensions.get('window').width - 8 * 3) / 2,
-    height: 180,
-    margin: 8,
+    // 默认值，可以通过props覆盖
+    width: Dimensions.get('window').width - 20,
+    height: 200,
+    margin: 10,
   },
   surface: {
     flex: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff',
-    padding: 12,
+    padding: 16,
   },
   logo: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginBottom: 8,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 12,
     backgroundColor: '#eee',
   },
   logoPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginBottom: 8,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginBottom: 12,
     backgroundColor: '#eee',
   },
   name: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 6,
     textAlign: 'center',
   },
   founder: {

@@ -3,6 +3,7 @@ import { View, StyleSheet, Image } from 'react-native';
 import { Text, Button, Surface } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from './context/AuthContext';
+import { Colors } from '../constants/Colors';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -10,7 +11,7 @@ export default function WelcomeScreen() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace('/mainTabs/home');
+      router.replace('/(tabs)/home');
     }
   }, [isAuthenticated, isLoading]);
 
@@ -40,6 +41,7 @@ export default function WelcomeScreen() {
           mode="contained" 
           style={styles.button} 
           onPress={() => router.push('/auth_index')}
+          buttonColor={Colors.light.tint}
         >
           Login
         </Button>
@@ -47,6 +49,7 @@ export default function WelcomeScreen() {
           mode="outlined" 
           style={styles.button} 
           onPress={() => router.push('/auth_index?register=1')}
+          textColor={Colors.light.tint}
         >
           Register
         </Button>

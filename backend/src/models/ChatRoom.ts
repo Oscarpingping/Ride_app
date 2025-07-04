@@ -41,19 +41,19 @@ const chatRoomSchema = new Schema<IChatRoom>(
     },
     members: {
       type: [{
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-      }],
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }],
       default: []
     },
     lastMessageId: {
       type: Schema.Types.ObjectId,
       ref: 'Message',
       default: null
-    },
+      },
     lastMessageTime: {
-      type: Date,
-      default: Date.now
+        type: Date,
+        default: Date.now
     },
     maxMembers: {
       type: Number,
