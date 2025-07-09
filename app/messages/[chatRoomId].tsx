@@ -68,7 +68,7 @@ export default function ChatRoomScreen() {
     if (!currentUser?._id || !chatRoomId) return;
 
     const newSocket = io(getApiBaseUrl(), {
-      transports: ['websocket'],
+      transports: Platform.OS === 'web' ? ['polling', 'websocket'] : ['websocket'],
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,
@@ -76,7 +76,6 @@ export default function ChatRoomScreen() {
     });
 
     newSocket.on('connect', () => {
-      // console.log('[Socket] Connected to server');
       setIsConnected(true);
       
       // 用户登录
@@ -87,7 +86,6 @@ export default function ChatRoomScreen() {
     });
 
     newSocket.on('disconnect', () => {
-      // console.log('[Socket] Disconnected from server');
       setIsConnected(false);
     });
 
@@ -224,8 +222,7 @@ export default function ChatRoomScreen() {
       const response = await messageAPI.sendChatRoomMessage(chatRoomId as string, messageData);
       
       if (response && typeof response === 'object' && 'success' in response && response.success) {
-        // 消息已通过Socket.IO实时推送，不需要手动添加到列表
-      setInputText('');
+        setInputText('');
         setShowMentionSuggestions(false);
         setMentionSuggestions([]);
         
@@ -414,6 +411,8 @@ export default function ChatRoomScreen() {
     fetchMessages();
   }, [fetchChatRoomData, fetchMessages]);
 
+
+
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const sender = item.senderId;
     if (!sender || !sender._id) return null;
@@ -546,9 +545,37 @@ export default function ChatRoomScreen() {
               <Text style={styles.connectionText}>Offline</Text>
             </View>
           )}
+
         <Appbar.Action icon="dots-vertical" onPress={() => {}} />
         </View>
       </Appbar.Header>
+
+      {/* Web版本输入框 - 显示在顶部 */}
+      {Platform.OS === 'web' && (
+        <View style={styles.webInputContainer}>
+          <View style={styles.inputContainer} onTouchStart={(e) => e.stopPropagation()}>
+            <IconButton icon="plus" size={24} onPress={handleAttachmentMenu} />
+            <TextInput
+              ref={textInputRef}
+              style={styles.textInput}
+              value={inputText}
+              onChangeText={handleTextChange}
+              placeholder="Type a message..."
+              multiline
+              disabled={isSending}
+              onSelectionChange={handleSelectionChange}
+              onFocus={handleInputFocus}
+              right={
+                <TextInput.Icon 
+                  icon={isSending ? "loading" : "send"} 
+                  onPress={handleSend}
+                  disabled={isSending}
+                />
+              }
+            />
+          </View>
+        </View>
+      )}
 
       <FlatList
         ref={flatListRef}
@@ -557,7 +584,6 @@ export default function ChatRoomScreen() {
         keyExtractor={item => item._id}
         style={styles.messageList}
         contentContainerStyle={{ padding: 8 }}
-        inverted
         refreshControl={
           <RefreshControl 
             refreshing={refreshing} 
@@ -573,6 +599,7 @@ export default function ChatRoomScreen() {
             <Text style={styles.emptySubtext}>Start the conversation!</Text>
           </View>
         )}
+        inverted={Platform.OS !== 'web'}
       />
 
       {/* @提及建议列表 */}
@@ -639,59 +666,64 @@ export default function ChatRoomScreen() {
         </Surface>
       )}
 
-      {Platform.OS === 'ios' ? (
-      <KeyboardAvoidingView
-          behavior="padding"
-        style={styles.keyboardView}
-          keyboardVerticalOffset={-insets.top}
-          enabled
-      >
-          <View style={[styles.inputContainer, { paddingBottom: insets.bottom }]} onTouchStart={(e) => e.stopPropagation()}>
-            <IconButton icon="plus" size={24} onPress={handleAttachmentMenu} />
-             <TextInput
-              ref={textInputRef}
-                style={styles.textInput}
-                value={inputText}
-              onChangeText={handleTextChange}
-                placeholder="Type a message..."
-                multiline
-              disabled={isSending}
-              onSelectionChange={handleSelectionChange}
-              onFocus={handleInputFocus}
-              right={
-                <TextInput.Icon 
-                  icon={isSending ? "loading" : "send"} 
-                  onPress={handleSend}
+      {/* 手机版本输入框 - 显示在底部 */}
+      {Platform.OS !== 'web' && (
+        <>
+          {Platform.OS === 'ios' ? (
+            <KeyboardAvoidingView
+              behavior="padding"
+              style={styles.keyboardView}
+              keyboardVerticalOffset={-insets.top}
+              enabled
+            >
+              <View style={[styles.inputContainer, { paddingBottom: insets.bottom }]} onTouchStart={(e) => e.stopPropagation()}>
+                <IconButton icon="plus" size={24} onPress={handleAttachmentMenu} />
+                <TextInput
+                  ref={textInputRef}
+                  style={styles.textInput}
+                  value={inputText}
+                  onChangeText={handleTextChange}
+                  placeholder="Type a message..."
+                  multiline
                   disabled={isSending}
+                  onSelectionChange={handleSelectionChange}
+                  onFocus={handleInputFocus}
+                  right={
+                    <TextInput.Icon 
+                      icon={isSending ? "loading" : "send"} 
+                      onPress={handleSend}
+                      disabled={isSending}
+                    />
+                  }
                 />
-              }
-             />
-        </View>
-      </KeyboardAvoidingView>
-      ) : (
-        <Animated.View style={[styles.keyboardView, { marginBottom: keyboardAnimation }]}>
-          <View style={[styles.inputContainer, { paddingBottom: insets.bottom }]} onTouchStart={(e) => e.stopPropagation()}>
-            <IconButton icon="plus" size={24} onPress={handleAttachmentMenu} />
-            <TextInput
-              ref={textInputRef}
-              style={styles.textInput}
-              value={inputText}
-              onChangeText={handleTextChange}
-              placeholder="Type a message..."
-              multiline
-              disabled={isSending}
-              onSelectionChange={handleSelectionChange}
-              onFocus={handleInputFocus}
-              right={
-                <TextInput.Icon 
-                  icon={isSending ? "loading" : "send"} 
-                  onPress={handleSend}
+              </View>
+            </KeyboardAvoidingView>
+          ) : (
+            <Animated.View style={[styles.keyboardView, { marginBottom: keyboardAnimation }]}>
+              <View style={[styles.inputContainer, { paddingBottom: insets.bottom }]} onTouchStart={(e) => e.stopPropagation()}>
+                <IconButton icon="plus" size={24} onPress={handleAttachmentMenu} />
+                <TextInput
+                  ref={textInputRef}
+                  style={styles.textInput}
+                  value={inputText}
+                  onChangeText={handleTextChange}
+                  placeholder="Type a message..."
+                  multiline
                   disabled={isSending}
+                  onSelectionChange={handleSelectionChange}
+                  onFocus={handleInputFocus}
+                  right={
+                    <TextInput.Icon 
+                      icon={isSending ? "loading" : "send"} 
+                      onPress={handleSend}
+                      disabled={isSending}
+                    />
+                  }
                 />
-              }
-            />
-          </View>
-        </Animated.View>
+              </View>
+            </Animated.View>
+          )}
+        </>
       )}
     </View>
   );
@@ -731,6 +763,11 @@ const styles = StyleSheet.create({
   },
   messageList: { 
     flex: 1 
+  },
+  webInputContainer: {
+    backgroundColor: '#f9f9f9',
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
   },
   keyboardView: {
     width: '100%',

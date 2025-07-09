@@ -6,8 +6,9 @@
 // 获取API基础URL
 export const getApiBaseUrl = (): string => {
   // 优先使用环境变量中的配置
-  const envApiUrl = process.env.API_BASE_URL;
+  const envApiUrl = process.env.API_BASE_URL || process.env.EXPO_PUBLIC_API_URL;
   if (envApiUrl) {
+    console.log('[API] Using environment variable URL:', envApiUrl);
     return envApiUrl;
   }
 
@@ -15,18 +16,27 @@ export const getApiBaseUrl = (): string => {
   if (typeof window === 'undefined' || !window.location) {
     // 开发环境
     if (__DEV__) {
-      return 'http://192.168.1.50:5001';
+      const devUrl = 'http://192.168.1.50:5001';
+      console.log('[API] Using development URL for React Native:', devUrl);
+      return devUrl;
     }
     // 生产环境
-    return 'https://your-production-api.com';
+    const prodUrl = 'http://3.139.190.107:5001';
+    console.log('[API] Using production URL for React Native:', prodUrl);
+    return prodUrl;
   }
   
   // 在Web环境中
   if (process.env.NODE_ENV === 'development') {
-    return 'http://192.168.1.50:5001';
+    const webDevUrl = 'http://192.168.1.50:5001';
+    console.log('[API] Using development URL for Web:', webDevUrl);
+    return webDevUrl;
   }
   
-  return 'https://your-production-api.com';
+  // Web环境生产环境 - 使用环境变量中的配置
+  const webProdUrl = process.env.EXPO_PUBLIC_API_URL || '';
+  console.log('[API] Using production URL for Web:', webProdUrl);
+  return webProdUrl;
 };
 
 // API端点配置

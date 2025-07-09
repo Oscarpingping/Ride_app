@@ -29,7 +29,7 @@ const initialForm: CreateClubForm = {
   rules: [],
   tags: [],
   isPrivate: false,
-  createChatRoom: true,
+  createChatRoom: false,
 };
 
 export default function CreateClubScreen() {
