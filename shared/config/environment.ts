@@ -35,7 +35,7 @@ export const getApiBaseUrl = (): string => {
   }
 
   // 生产环境默认值
-  return 'https://your-production-api.com';
+  return 'https://3.139.190.107:5001';
 };
 
 // 获取其他环境变量

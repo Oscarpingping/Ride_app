@@ -18,7 +18,7 @@ export const getApiBaseUrl = (): string => {
       return 'http://192.168.1.50:5001';
     }
     // 生产环境
-    return 'https://your-production-api.com';
+    return 'http://3.139.190.107:5001';
   }
   
   // 在Web环境中
@@ -26,7 +26,7 @@ export const getApiBaseUrl = (): string => {
     return 'http://192.168.1.50:5001';
   }
   
-  return 'https://your-production-api.com';
+  return 'http://3.139.190.107:5001';
 };
 
 // API端点配置

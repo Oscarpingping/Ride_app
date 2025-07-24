@@ -7,11 +7,12 @@ interface EnvConfig {
   DEFAULT_LANGUAGE: string;
   SUPPORTED_LANGUAGES: string[];
 }
+import { ENV_CONFIG } from './environment';
 
 const env: EnvConfig = {
-  API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:5001',
-  MAPBOX_ACCESS_TOKEN: process.env.MAPBOX_ACCESS_TOKEN || '',
-  GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY || '',
+  API_BASE_URL: ENV_CONFIG.API_BASE_URL,
+  MAPBOX_ACCESS_TOKEN: ENV_CONFIG.MAPBOX_ACCESS_TOKEN,
+  GOOGLE_MAPS_API_KEY: ENV_CONFIG.GOOGLE_MAPS_API_KEY,
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
   SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/gif'],
   DEFAULT_LANGUAGE: 'zh-CN',
