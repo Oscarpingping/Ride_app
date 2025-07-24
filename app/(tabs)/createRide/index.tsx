@@ -18,8 +18,10 @@ interface MapPressEvent {
 }
 
 
+import { ENV_CONFIG } from '../../../shared/config/environment';
+
 async function geocodeAddress(address: string) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+  const url = `${ENV_CONFIG.GEOCODING_URL}/search?format=json&q=${encodeURIComponent(address)}`;
   const response = await fetch(url);
   const data = await response.json();
   if (data && data.length > 0) {
@@ -33,7 +35,7 @@ async function geocodeAddress(address: string) {
 }
 
 async function reverseGeocode(lat: number, lon: number) {
-  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+  const url = `${ENV_CONFIG.GEOCODING_URL}/reverse?format=json&lat=${lat}&lon=${lon}`;
   const response = await fetch(url);
   const data = await response.json();
   if (data && data.display_name) {

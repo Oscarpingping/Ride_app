@@ -117,8 +117,10 @@ export default function RideDetailsScreen() {
       </Appbar.Header>
 
       <ScrollView style={styles.content}>
+import { ENV_CONFIG } from '../../shared/config/environment';
+
         <Image
-          source={{ uri: 'https://example.com/ride-image.jpg' }}
+          source={{ uri: `${ENV_CONFIG.PLACEHOLDER_IMAGE_URL}/400x200` }}
           style={styles.coverImage}
         />
 
@@ -129,7 +131,7 @@ export default function RideDetailsScreen() {
             <View style={styles.organizer}>
               <Avatar.Image
                 size={40}
-                source={{ uri: 'https://example.com/avatar.jpg' }}
+                source={{ uri: ENV_CONFIG.DEFAULT_AVATAR_URL }}
               />
               <View style={styles.organizerInfo}>
                 <Text variant="bodyLarge">{ride.creator.name}</Text>
@@ -149,12 +151,12 @@ export default function RideDetailsScreen() {
           <View style={styles.participantsRow}>
             <Avatar.Image
               size={32}
-              source={{ uri: 'https://example.com/participant1.jpg' }}
+              source={{ uri: ENV_CONFIG.DEFAULT_AVATAR_URL }}
               style={styles.participant}
             />
             <Avatar.Image
               size={32}
-              source={{ uri: 'https://example.com/participant2.jpg' }}
+              source={{ uri: ENV_CONFIG.DEFAULT_AVATAR_URL }}
               style={styles.participant}
             />
             <View style={[styles.participant, styles.participantCount]}>

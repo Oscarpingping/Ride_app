@@ -48,7 +48,22 @@ export const getGoogleMapsApiKey = (): string => {
 };
 
 export const getNginxUrl = (): string => {
-  return getEnvVar('NGINX_URL', 'http://192.168.1.50');
+  return getEnvVar('NGINX_URL', isDevelopment ? 'http://192.168.1.50' : 'http://3.139.190.107');
+};
+
+// 获取地图服务 URL
+export const getGeocodingUrl = (): string => {
+  return getEnvVar('GEOCODING_URL', 'https://nominatim.openstreetmap.org');
+};
+
+// 获取默认头像 URL
+export const getDefaultAvatarUrl = (): string => {
+  return getEnvVar('DEFAULT_AVATAR_URL', 'https://i.pravatar.cc/150?u=default');
+};
+
+// 获取占位符图片 URL
+export const getPlaceholderImageUrl = (): string => {
+  return getEnvVar('PLACEHOLDER_IMAGE_URL', 'https://via.placeholder.com');
 };
 
 // 导出环境配置对象
@@ -57,6 +72,9 @@ export const ENV_CONFIG = {
   MAPBOX_ACCESS_TOKEN: getMapboxToken(),
   GOOGLE_MAPS_API_KEY: getGoogleMapsApiKey(),
   NGINX_URL: getNginxUrl(),
+  GEOCODING_URL: getGeocodingUrl(),
+  DEFAULT_AVATAR_URL: getDefaultAvatarUrl(),
+  PLACEHOLDER_IMAGE_URL: getPlaceholderImageUrl(),
   IS_DEVELOPMENT: isDevelopment,
   IS_REACT_NATIVE: isReactNative,
 } as const;
