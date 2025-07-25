@@ -18,10 +18,14 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "diagnose": "node ./scripts/diagnose/index.js",
     "env:dev": "node scripts/switch-env.js development",
     "env:prod": "node scripts/switch-env.js production",
-    "verify-env": "node scripts/verify-env.js"
+    "env:dev-prod": "cp .env.dev-prod .env",
+    "env:build-prod": "cp .env.build-prod .env",
+    "ios:dev-prod": "cp .env.dev-prod .env && expo run:ios",
+    "verify-env": "node scripts/verify-env.js",
+    "build:ios-standalone": "npm run env:build-prod && npx expo prebuild --platform ios --clean",
+    "archive:ios": "npm run env:build-prod && npx expo prebuild --platform ios --clean && open ios/wildpals.xcworkspace"
   },
   "jest": {
     "preset": "jest-expo"
