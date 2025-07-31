@@ -1,0 +1,44 @@
+{
+  "cli": {
+    "version": ">= 5.2.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    },
+    "production": {
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    },
+    "standalone-prod": {
+      "env": {
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "http://3.139.190.107:5001",
+        "EXPO_PUBLIC_NGINX_URL": "http://3.139.190.107",
+        "EXPO_PUBLIC_BUILD_MODE": "standalone"
+      },
+      "ios": {
+        "resourceClass": "m-medium",
+        "buildType": "release"
+      },
+      "android": {
+        "resourceClass": "m-medium",
+        "buildType": "apk"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

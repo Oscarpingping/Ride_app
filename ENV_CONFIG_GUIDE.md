@@ -10,7 +10,6 @@ API_BASE_URL=http://localhost:5001/api  # 开发环境
 
 # 地图服务配置
 MAPBOX_ACCESS_TOKEN=your_mapbox_token_here
-GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
 ## 后端环境变量配置

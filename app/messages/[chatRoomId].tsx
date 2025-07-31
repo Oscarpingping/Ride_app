@@ -12,6 +12,7 @@ import { ChatRoom } from '../../shared/types/club';
 import { ChatMessage } from '../../shared/types/entities';
 import { ImageService } from '../services/imageService';
 import { Colors } from '../../constants/Colors';
+import { ENV_CONFIG } from '../../shared/config/environment';
 
 // 成员类型定义
 interface ChatMember {
@@ -491,7 +492,7 @@ export default function ChatRoomScreen() {
         {!isMyMessage && (
           <Avatar.Image 
             size={32} 
-            source={{ uri: sender.avatar ? ImageService.getImageUrl(sender.avatar) : 'https://i.pravatar.cc/150?u=default' }} 
+            source={{ uri: sender.avatar ? ImageService.getImageUrl(sender.avatar) : ENV_CONFIG.DEFAULT_AVATAR_URL }} 
             style={styles.avatar} 
           />
         )}

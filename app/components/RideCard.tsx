@@ -17,9 +17,11 @@ export const RideCard: React.FC<RideCardProps> = ({ ride, onPress }) => {
     <Surface style={styles.container} elevation={2}>
       <View style={styles.header}>
         <View style={styles.organizer}>
+import { ENV_CONFIG } from '../../shared/config/environment';
+
           <Avatar.Image 
             size={40} 
-            source={{ uri: ride.creator.avatar || 'https://via.placeholder.com/40' }} 
+            source={{ uri: ride.creator.avatar || `${ENV_CONFIG.PLACEHOLDER_IMAGE_URL}/40` }} 
           />
           <View style={styles.organizerInfo}>
             <Text variant="titleMedium">{ride.creator.name}</Text>

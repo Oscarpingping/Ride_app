@@ -9,6 +9,7 @@ import { chatRoomAPI } from '../../services/api';
 import { ChatRoom } from '../../../shared/types/club';
 import { ImageService } from '../../services/imageService';
 import { Colors } from '../../../constants/Colors';
+import { ENV_CONFIG } from '../../../shared/config/environment';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -199,7 +200,7 @@ export default function MessagesScreen() {
       }
       // 默认头像
       // console.log('[UI] 使用默认头像');
-      return 'https://i.pravatar.cc/150?u=default';
+      return ENV_CONFIG.DEFAULT_AVATAR_URL;
     };
     
     return (

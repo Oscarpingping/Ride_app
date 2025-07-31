@@ -1,5 +1,5 @@
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:5000/api';
-
+import { getApiBaseUrl } from '../config/environment';
+const API_BASE_URL = getApiBaseUrl();
 export const ENDPOINTS = {
   // 用户认证
   AUTH: {
