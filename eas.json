@@ -25,11 +25,16 @@
       "env": {
         "NODE_ENV": "production",
         "EXPO_PUBLIC_API_URL": "http://3.139.190.107:5001",
-        "EXPO_PUBLIC_NGINX_URL": "http://3.139.190.107"
+        "EXPO_PUBLIC_NGINX_URL": "http://3.139.190.107",
+        "EXPO_PUBLIC_BUILD_MODE": "standalone"
       },
       "ios": {
         "resourceClass": "m-medium",
         "buildType": "release"
+      },
+      "android": {
+        "resourceClass": "m-medium",
+        "buildType": "apk"
       }
     }
   },

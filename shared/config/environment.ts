@@ -20,10 +20,10 @@ export const getApiBaseUrl = (): string => {
   // 1. EXPO_PUBLIC_API_URL (React Native 客户端可访问)
   // 2. API_BASE_URL (服务端和 Web 可访问)
   // 3. 默认值
-  
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL || 
-                 process.env.API_BASE_URL;
-  
+
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL ||
+    process.env.API_BASE_URL;
+
   if (apiUrl) {
     return apiUrl;
   }
@@ -43,9 +43,7 @@ export const getMapboxToken = (): string => {
   return getEnvVar('MAPBOX_ACCESS_TOKEN', '');
 };
 
-export const getGoogleMapsApiKey = (): string => {
-  return getEnvVar('GOOGLE_MAPS_API_KEY', '');
-};
+
 
 export const getNginxUrl = (): string => {
   return getEnvVar('NGINX_URL', isDevelopment ? 'http://192.168.1.50' : 'http://3.139.190.107');
@@ -70,7 +68,6 @@ export const getPlaceholderImageUrl = (): string => {
 export const ENV_CONFIG = {
   API_BASE_URL: getApiBaseUrl(),
   MAPBOX_ACCESS_TOKEN: getMapboxToken(),
-  GOOGLE_MAPS_API_KEY: getGoogleMapsApiKey(),
   NGINX_URL: getNginxUrl(),
   GEOCODING_URL: getGeocodingUrl(),
   DEFAULT_AVATAR_URL: getDefaultAvatarUrl(),

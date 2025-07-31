@@ -9,10 +9,11 @@ import rideRoutes from './routes/rides';
 import userRoutes from './routes/userRoutes';
 import clubRoutes from './routes/clubRoutes';
 import messageRoutes from './routes/messageRoutes';
-import webRoutes from './routes/web';
+
 import chatRoomRoutes from './routes/chatRoomRoutes';
 import socketRoutes from './routes/socketRoutes';
 import { SYSTEM_CONFIG } from './config/system';
+import { resetPasswordWeb, resetPasswordSuccess, resetPasswordError } from './controllers/authController';
 
 const app = express();
 
@@ -55,7 +56,10 @@ app.use('/api/rides', rideRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/clubs', clubRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/web', webRoutes);
+// Web 路由 - 密码重置页面
+app.get('/reset-password', resetPasswordWeb);
+app.get('/reset-success', resetPasswordSuccess);
+app.get('/reset-error', resetPasswordError);
 app.use('/api/chatrooms', chatRoomRoutes);
 app.use('/api/socket', socketRoutes);
 
