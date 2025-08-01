@@ -9,7 +9,7 @@ import rideRoutes from './routes/rides';
 import userRoutes from './routes/userRoutes';
 import clubRoutes from './routes/clubRoutes';
 import messageRoutes from './routes/messageRoutes';
-import webRoutes from './routes/web';
+//import webRoutes from './routes/web';
 import chatRoomRoutes from './routes/chatRoomRoutes';
 import socketRoutes from './routes/socketRoutes';
 import { SYSTEM_CONFIG } from './config/system';
@@ -55,9 +55,13 @@ app.use('/api/rides', rideRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/clubs', clubRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/web', webRoutes);
 app.use('/api/chatrooms', chatRoomRoutes);
 app.use('/api/socket', socketRoutes);
+
+import { resetPasswordWeb, resetPasswordSuccess, resetPasswordError } from './controllers/authController';
+app.get('/reset-password', resetPasswordWeb);
+app.get('/reset-success', resetPasswordSuccess);
+app.get('/reset-error', resetPasswordError);
 
 // 添加静态文件服务
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {

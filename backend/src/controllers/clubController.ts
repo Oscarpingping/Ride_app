@@ -226,9 +226,9 @@ export const createClub = async (req: Request, res: Response): Promise<Response>
       }
     }
 
-    // 如果是俱乐部聊天室，更新俱乐部的chatRoom引用
-    if (clubId) {
-      await Club.findByIdAndUpdate(clubId, { chatRoom: club.chatRoom });
+// 如果是俱乐部聊天室，更新俱乐部的chatRoom引用
+    if (club.chatRoom) {
+      await Club.findByIdAndUpdate(club._id, { chatRoom: club.chatRoom });
     }
 
     return res.status(201).json({

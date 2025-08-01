@@ -132,11 +132,19 @@ export class ImageService {
     const match = /\.(\w+)$/.exec(filename);
     const fileType = match ? `image/${match[1]}` : 'image/jpeg';
 
-    formData.append(options.fieldName, {
-      uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
-      name: filename,
-      type: fileType,
-    } as any);
+    //if (Platform.OS === 'web') {
+      // Web端：先fetch转成Blob
+      //const response = await fetch(uri);
+      //const blob = await response.blob();
+     // formData.append(options.fieldName, uri as File, filename);
+    //} else {
+      // 移动端：原有写法
+      formData.append(options.fieldName, {
+        uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
+        name: filename,
+        type: fileType,
+      } as any);
+    //}
 
     if (options.extraFormData) {
       Object.entries(options.extraFormData).forEach(([k, v]) => formData.append(k, v));

@@ -37,7 +37,7 @@ export const uploadImage = async (
     const relativePath = `/uploads/${options.subDir}`;
     // 确保上传目录存在
     if (!fs.existsSync(uploadPath)) {
-      await mkdirAsync(uploadPath, { recursive: true });
+      await mkdirAsync(uploadPath, { recursive: true, mode: 0o755 });
     }
     // 压缩图片
     const compressedBuffer = await sharp(file.buffer)
